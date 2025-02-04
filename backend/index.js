@@ -5,19 +5,38 @@ import morgan from 'morgan';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import quoteRoutes from './routes/quote.routes.js';
+import clientRoutes from './routes/client.routes.js'; // Importar rutas de clientes
+import inventoryRoutes from './routes/inventory.routes.js'
+import salesRoutes from './routes/sales.routes.js';
+import mechanicRoutes from './routes/mechanicRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import authRoutes from "./routes/authRoutes.js";
+import movementRoutes from './routes/movement.routes.js'; // Asegúrate de que la ruta sea correcta
+import receptionRoutes from './routes/reception.routes.js'; // Asegúrate de que la ruta sea correcta
 
-dotenv.config(); // Cargar las variables de entorno
-console.log('Mongo URI:', process.env.MONGO_URI); // Verificar si se está cargando correctamente la URI
+import http from 'http';
+import { Server } from 'socket.io';
+
+dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Permitir ambos orígenes
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+
 const PORT = process.env.PORT || 5000;
 
-// === Middleware global ===
+// Middlewares
 app.use(morgan('dev'));
-app.use(cors({ origin: 'http://localhost:5173', credentials: true })); // Permitir solicitudes del frontend en el puerto 5173
+app.use(cors({ origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], credentials: true }));
 app.use(bodyParser.json());
 
-// === Conexión a MongoDB ===
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
@@ -28,20 +47,28 @@ mongoose
     process.exit(1);
   });
 
-// === Rutas ===
-app.use('/quotes', quoteRoutes);
+  // Rutas
+app.use('/api/quotes', quoteRoutes);
+app.use('/api/clients', clientRoutes); // Registrar rutas de clientes
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/sales', salesRoutes);
+app.use('/api/mechanics', mechanicRoutes);
+app.use('/api/users', userRoutes);
+app.use("/api/auth", authRoutes);
+app.use('/api/movements', movementRoutes);
+app.use('/api/receptions', receptionRoutes);
+
+// Conexión a MongoDB
 
 app.get('/', (req, res) => {
   res.send('API de Maremotors funcionando');
 });
 
-// === Manejo de errores ===
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Algo salió mal en el servidor');
 });
 
-// === Servidor ===
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
 });

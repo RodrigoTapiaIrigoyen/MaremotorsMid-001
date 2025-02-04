@@ -1,74 +1,56 @@
-import Quote from '../models/Quote.js';
+import Quote from '../models/QuoteModel.js';
 
+// Obtener todas las cotizaciones
 export const getQuotes = async (req, res) => {
   try {
     const quotes = await Quote.find();
     res.json(quotes);
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener cotizaciones' });
+    res.status(500).json({ error: "Error al obtener las cotizaciones" });
   }
 };
 
-export const getQuoteById = async (req, res) => {
-  try {
-    const quote = await Quote.findById(req.params.id);
-    if (!quote)
-      return res.status(404).json({ message: 'Cotización no encontrada' });
-    res.json(quote);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener la cotización' });
-  }
-};
-
+// Crear una nueva cotización
 export const createQuote = async (req, res) => {
+  const { reception, date, client, unit, document, status } = req.body;
+
+  const newQuote = new Quote({ reception, date, client, unit, document, status });
+
   try {
-    const { name, description } = req.body;
-    const newQuote = new Quote({ name, description });
-    await newQuote.save();
-    res.status(201).json(newQuote);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al crear la cotización' });
+    const savedQuote = await newQuote.save();
+    res.status(201).json(savedQuote);
+  } catch (err) {
+    res.status(500).json({ message: 'Error al guardar la cotización', error: err });
   }
 };
 
+// Actualizar una cotización
 export const updateQuote = async (req, res) => {
+  const { id } = req.params;
+  const { reception, date, client, unit, document, status } = req.body;
+
   try {
-    const { name, description } = req.body;
-    const updatedQuote = await Quote.findByIdAndUpdate(
-      req.params.id,
-      { name, description },
-      { new: true }
-    );
-    if (!updatedQuote)
+    const updatedQuote = await Quote.findByIdAndUpdate(id, { reception, date, client, unit, document, status }, { new: true });
+    if (!updatedQuote) {
       return res.status(404).json({ message: 'Cotización no encontrada' });
+    }
     res.json(updatedQuote);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al actualizar la cotización' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al actualizar la cotización', error: err });
   }
 };
 
+// Eliminar una cotización
 export const deleteQuote = async (req, res) => {
-  try {
-    const deletedQuote = await Quote.findByIdAndDelete(req.params.id);
-    if (!deletedQuote)
-      return res.status(404).json({ message: 'Cotización no encontrada' });
-    res.json({ message: 'Cotización eliminada' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error al eliminar la cotización' });
-  }
-};
+  const { id } = req.params;
 
-export const archiveQuote = async (req, res) => {
   try {
-    const archivedQuote = await Quote.findByIdAndUpdate(
-      req.params.id,
-      { archived: true },
-      { new: true }
-    );
-    if (!archivedQuote)
+    const deletedQuote = await Quote.findByIdAndDelete(id);
+    if (!deletedQuote) {
       return res.status(404).json({ message: 'Cotización no encontrada' });
-    res.json(archivedQuote);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al archivar la cotización' });
+    }
+    res.json({ message: 'Cotización eliminada' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al eliminar la cotización', error: err });
   }
 };

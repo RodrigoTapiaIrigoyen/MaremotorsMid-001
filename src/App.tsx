@@ -11,6 +11,8 @@ import Clients from './pages/Clients';
 import Mechanics from './pages/Mechanics';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Users from './pages/Users';
+
 
 // Catalog sub-pages
 import Products from './pages/catalog/Products';
@@ -41,6 +43,8 @@ function App() {
           <Route path="mechanics" element={<Mechanics />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="users" element={<Users />} />
+
         </Route>
       </Routes>
     </BrowserRouter>
