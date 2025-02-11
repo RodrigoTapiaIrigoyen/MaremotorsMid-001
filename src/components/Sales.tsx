@@ -1,75 +1,57 @@
-import React, { useState } from 'react';
-import axiosInstance from '../axios';
-
-interface SaleData {
-  clientId: string;
-  productId: string;
-  quantity: number;
-}
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 const Sales: React.FC = () => {
-  const [clientId, setClientId] = useState<string>('');
-  const [productId, setProductId] = useState<string>('');
-  const [quantity, setQuantity] = useState<number>(1);
-  const [message, setMessage] = useState<string>('');
+  const [sales, setSales] = useState([]);
 
-  const handleSale = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Crear una venta en el backend
-    const saleData: SaleData = {
-      clientId,
-      productId,
-      quantity,
-    };
-
-    try {
-      const response = await axiosInstance.post('/sales', saleData);
-      setMessage('Venta registrada con éxito!');
-      setClientId('');
-      setProductId('');
-      setQuantity(1);
-    } catch (error) {
-      console.error('Error al registrar la venta:', error);
-      setMessage('Error al registrar la venta');
-    }
-  };
+  useEffect(() => {
+    // Obtener ventas
+    axios.get("http://localhost:5000/api/sales")
+      .then((response) => {
+        console.log(response.data); // Agregar este console.log para inspeccionar los datos
+        setSales(response.data);
+      })
+      .catch((err) => console.error("Error al obtener las ventas:", err));
+  }, []);
 
   return (
-    <div>
-      <h1>Registrar Venta</h1>
-      <form onSubmit={handleSale}>
-        <div>
-          <label>Cliente</label>
-          <input
-            type="text"
-            value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Producto</label>
-          <input
-            type="text"
-            value={productId}
-            onChange={(e) => setProductId(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Cantidad</label>
-          <input
-            type="number"
-            value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
-            min="1"
-            required
-          />
-        </div>
-        <button type="submit">Registrar Venta</button>
-      </form>
-      {message && <p>{message}</p>}
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-4xl font-bold mb-6 text-center text-gray-800">Gestión de Ventas</h1>
+      <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-700">Ventas</h2>
+        <table className="min-w-full bg-white">
+          <thead>
+            <tr>
+              <th className="px-6 py-3 border-b-2 border-gray-300 text-left leading-4 text-gray-600 tracking-wider">Venta ID</th>
+              <th className="px-6 py-3 border-b-2 border-gray-300 text-left leading-4 text-gray-600 tracking-wider">Fecha</th>
+              <th className="px-6 py-3 border-b-2 border-gray-300 text-left leading-4 text-gray-600 tracking-wider">Total</th>
+              <th className="px-6 py-3 border-b-2 border-gray-300 text-left leading-4 text-gray-600 tracking-wider">Productos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sales.map((sale) => (
+              <tr key={sale._id}>
+                <td className="px-6 py-4 border-b border-gray-300 text-sm leading-5 text-gray-800">{sale._id}</td>
+                <td className="px-6 py-4 border-b border-gray-300 text-sm leading-5 text-gray-800">{new Date(sale.date).toLocaleDateString()}</td>
+                <td className="px-6 py-4 border-b border-gray-300 text-sm leading-5 text-gray-800">${sale.totalPrice}</td>
+                <td className="px-6 py-4 border-b border-gray-300 text-sm leading-5 text-gray-800">
+                  <ul>
+                    {Array.isArray(sale.products) && sale.products.length > 0 ? (
+                      sale.products.map((product, index) => (
+                        <li key={product?.product?._id || index} className="text-gray-600">
+                          {product?.product?.name ? `${product.product.name} - Cantidad: ${product.quantity}` : `Producto no disponible - Cantidad: ${product?.quantity || 0}`}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-gray-600">No hay productos en esta venta.</li>
+                    )}
+                  </ul>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

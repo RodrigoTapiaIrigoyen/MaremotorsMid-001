@@ -1,142 +1,63 @@
 import Product from '../models/productModel.js';
+import Movement from '../models/MovementModel.js';
 
-// @desc    Get all products
-// @route   GET /api/products
-// @access  Private
+// Obtener todos los productos
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find({});
+    const products = await Product.find();
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Error al obtener los productos', error });
   }
 };
 
-// @desc    Get product by ID
-// @route   GET /api/products/:id
-// @access  Private
-export const getProductById = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    
-    if (product) {
-      res.json(product);
-    } else {
-      res.status(404).json({ message: 'Product not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// @desc    Create new product
-// @route   POST /api/products
-// @access  Private/Admin
+// Crear un nuevo producto
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, category, price, stock, minStock, partNumber } = req.body;
-
-    const product = await Product.create({
-      name,
-      description,
-      category,
-      price,
-      stock,
-      minStock,
-      partNumber
-    });
-
-    res.status(201).json(product);
+    const { name, price, stock, minStock, section, subsection } = req.body;
+    const newProduct = new Product({ name, price, stock, minStock, section, subsection });
+    await newProduct.save();
+    res.status(201).json(newProduct);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: 'Error al crear el producto', error });
   }
 };
 
-// @desc    Update product
-// @route   PUT /api/products/:id
-// @access  Private/Admin
+// Actualizar un producto existente
 export const updateProduct = async (req, res) => {
+  const { id } = req.params;
+  const { name, price, stock, minStock, section, subsection } = req.body;
+
   try {
-    const { name, description, category, price, stock, minStock, partNumber } = req.body;
-    const product = await Product.findById(req.params.id);
-
-    if (product) {
-      product.name = name || product.name;
-      product.description = description || product.description;
-      product.category = category || product.category;
-      product.price = price || product.price;
-      product.stock = stock !== undefined ? stock : product.stock;
-      product.minStock = minStock || product.minStock;
-      product.partNumber = partNumber || product.partNumber;
-
-      const updatedProduct = await product.save();
-      res.json(updatedProduct);
-    } else {
-      res.status(404).json({ message: 'Product not found' });
-    }
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      { name, price, stock, minStock, section, subsection },
+      { new: true }
+    );
+    res.status(200).json(updatedProduct);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: 'Error al actualizar el producto', error });
   }
 };
 
-// @desc    Delete product
-// @route   DELETE /api/products/:id
-// @access  Private/Admin
+// Eliminar un producto
 export const deleteProduct = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
+  const { id } = req.params;
 
-    if (product) {
-      await product.deleteOne();
-      res.json({ message: 'Product removed' });
-    } else {
-      res.status(404).json({ message: 'Product not found' });
-    }
+  try {
+    await Product.findByIdAndDelete(id);
+    res.json({ message: 'Producto eliminado' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Error al eliminar el producto', error });
   }
 };
 
-// @desc    Update product stock
-// @route   PUT /api/products/:id/stock
-// @access  Private
-export const updateStock = async (req, res) => {
+// Obtener movimientos de productos
+export const getMovements = async (req, res) => {
   try {
-    const { quantity, type } = req.body; // type: 'add' or 'subtract'
-    const product = await Product.findById(req.params.id);
-
-    if (product) {
-      if (type === 'add') {
-        product.stock += quantity;
-      } else if (type === 'subtract') {
-        if (product.stock < quantity) {
-          return res.status(400).json({ message: 'Insufficient stock' });
-        }
-        product.stock -= quantity;
-      }
-
-      const updatedProduct = await product.save();
-      res.json(updatedProduct);
-    } else {
-      res.status(404).json({ message: 'Product not found' });
-    }
+    const movements = await Movement.find().populate('product');
+    res.json(movements);
   } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// @desc    Get low stock products
-// @route   GET /api/products/low-stock
-// @access  Private
-export const getLowStockProducts = async (req, res) => {
-  try {
-    const products = await Product.find({
-      $expr: {
-        $lte: ['$stock', '$minStock']
-      }
-    });
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Error al obtener los movimientos', error });
   }
 };

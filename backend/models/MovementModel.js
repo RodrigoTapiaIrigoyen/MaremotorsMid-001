@@ -1,19 +1,10 @@
 import mongoose from 'mongoose';
 
-const movementSchema = new mongoose.Schema(
-  {
-    date: { type: String, required: true },
-    product: { type: String, required: true },
-    partNumber: { type: String, required: true },
-    type: { type: String, enum: ['entrada', 'salida'], required: true },
-    quantity: { type: Number, required: true },
-    amount: { type: Number, required: true },
-    user: { type: String, required: true },
-    comments: { type: String },
-  },
-  { timestamps: true } // Añadimos las fechas de creación y actualización
-);
+const movementSchema = new mongoose.Schema({
+  product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+  type: { type: String, enum: ['entrada', 'salida'], required: true },
+  quantity: { type: Number, required: true },
+  date: { type: Date, default: Date.now }
+});
 
-const Movement = mongoose.model('Movement', movementSchema);
-
-export default Movement;
+export default mongoose.model('Movement', movementSchema);
