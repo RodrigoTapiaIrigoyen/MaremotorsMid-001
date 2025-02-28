@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import jsPDF from "jspdf";
+import 'jspdf-autotable';
 import { 
   ShoppingCart, 
   Package, 
@@ -22,6 +24,14 @@ interface Product {
   price: number;
 }
 
+interface Client {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+}
+
 interface SaleProduct {
   product: Product | null;
   quantity: number;
@@ -33,12 +43,15 @@ interface Sale {
   total: number;
   products: SaleProduct[];
   status: string;
+  client: Client | null;
 }
 
 const Sales: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string>("");
+  const [selectedClient, setSelectedClient] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
@@ -51,12 +64,14 @@ const Sales: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [salesRes, productsRes] = await Promise.all([
+      const [salesRes, productsRes, clientsRes] = await Promise.all([
         axios.get("http://localhost:5000/api/sales"),
-        axios.get("http://localhost:5000/api/products")
+        axios.get("http://localhost:5000/api/products"),
+        axios.get("http://localhost:5000/api/clients")
       ]);
       setSales(salesRes.data);
       setProducts(productsRes.data);
+      setClients(clientsRes.data);
     } catch (err) {
       console.error("Error fetching data:", err);
       setError("Error al cargar los datos. Por favor, intente nuevamente.");
@@ -64,8 +79,8 @@ const Sales: React.FC = () => {
   };
 
   const handleSale = async () => {
-    if (!selectedProduct || quantity <= 0) {
-      setError("Selecciona un producto y una cantidad válida.");
+    if (!selectedProduct || quantity <= 0 || !selectedClient) {
+      setError("Selecciona un producto, un cliente y una cantidad válida.");
       return;
     }
 
@@ -76,11 +91,18 @@ const Sales: React.FC = () => {
         return;
       }
 
+      const client = clients.find(c => c._id === selectedClient);
+      if (!client) {
+        setError("Cliente no encontrado.");
+        return;
+      }
+
       const newSale = {
         products: [{ product: selectedProduct, quantity }],
         total: product.price * quantity,
         date: new Date().toISOString(),
-        status: "pendiente"
+        status: "pendiente",
+        client: selectedClient
       };
 
       await axios.post("http://localhost:5000/api/sales", newSale);
@@ -89,6 +111,7 @@ const Sales: React.FC = () => {
       setSuccess("Venta realizada con éxito.");
       setError("");
       setSelectedProduct("");
+      setSelectedClient("");
       setQuantity(1);
     } catch (err) {
       console.error("Error al realizar la venta:", err);
@@ -133,12 +156,110 @@ const Sales: React.FC = () => {
     }
   };
 
+ 
+  const handlePrintPDF = (sale: Sale) => {
+    if (!sale.client) {
+      setError("Cliente no encontrado para esta venta.");
+      return;
+    }
+  
+    const applyIVA = window.confirm("¿Quieres aplicar IVA (16%)?");
+    const discount = window.prompt("Ingrese el porcentaje de descuento (0-100):", "0");
+    const discountValue = parseFloat(discount || "0");
+  
+    // Cargar el logo
+    const logo = new Image();
+    logo.src = 'src/logo/Maremotors.png'; // Asegúrate de que la ruta sea correcta
+  
+    const doc = new jsPDF();
+    doc.addImage(logo, 'PNG', 10, 10, 50, 20);
+  
+    doc.setFontSize(12);
+    doc.text("Maremotors YAMAHA", 105, 10, { align: "center" });
+    doc.setFontSize(10);
+    doc.text("Carretera Merida Progreso Kilómetro Merida 24", 105, 16, { align: "center" });
+    doc.text("San Ignacio, Yucatan", 105, 20, { align: "center" });
+    doc.text("Tel: 9992383587 / 9997389040", 105, 24, { align: "center" });
+    doc.text("Horario: Lunes a Viernes de 9AM - 5PM, Sábado de 9AM - 1:30PM", 120, 28, { align: "center" });
+    doc.text("EXISTEN ACCESORIOS Y PARTES DE LOS VEHICULOS QUE PUEDEN TENER VICIOS OCULTOS,", 105, 32, { align: "center" });
+    doc.text("NO NOS HACEMOS REPONSABLES QUE ESTANDO EN RESGUARDO O EN EL TRANSCURSO", 105, 36, { align: "center" });
+    doc.text("QUE SE RECOJAN SE DAÑEN.", 105, 40, { align: "center" });
+  
+    const saleData = [
+      ["Fecha:", new Date(sale.date).toLocaleDateString()],
+      ["Cliente:", sale.client.name],
+      ["Teléfono:", sale.client.phone],
+      ["Email:", sale.client.email],
+      ["Dirección:", sale.client.address],
+      ["Estado:", sale.status.charAt(0).toUpperCase() + sale.status.slice(1)]
+    ];
+  
+    const productData = sale.products.map((p, idx) => {
+      const price = p.product?.price || 0;
+      const subtotal = price * p.quantity;
+      const discountAmount = subtotal * (discountValue / 100);
+      const totalWithDiscount = subtotal - discountAmount;
+      const totalWithIVA = applyIVA ? totalWithDiscount * 1.16 : totalWithDiscount;
+  
+      return [
+        idx + 1,
+        p.product?.name || "Producto no disponible",
+        p.quantity,
+        `$${price.toFixed(2)}`,
+        `${discountValue}%`,
+        `$${subtotal.toFixed(2)}`,
+        `$${totalWithIVA.toFixed(2)}`
+      ];
+    });
+  
+    const totals = [
+      ["Subtotal:", `$${sale.products.reduce((sum, p) => sum + (p.product?.price || 0) * p.quantity, 0).toFixed(2)}`],
+      ["Descuento:", `${discountValue}%`],
+      ["IVA:", applyIVA ? "16%" : "0%"],
+      ["Total:", `$${(applyIVA ? sale.total * 1.16 : sale.total).toFixed(2)}`]
+    ];
+  
+    doc.autoTable({
+      head: [["Campo", "Valor"]],
+      body: saleData,
+      startY: 50,
+      margin: { left: 10, right: 10 },
+      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] },
+      styles: { lineColor: [0, 0, 0], lineWidth: 0.5, textColor: [0, 0, 0] }
+    });
+  
+    doc.autoTable({
+      head: [["#", "Producto", "Cantidad", "Precio Unitario", "Descuento", "Subtotal", "Importe"]],
+      body: productData,
+      startY: doc.lastAutoTable.finalY + 10,
+      margin: { left: 10, right: 10 },
+      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] },
+      styles: { lineColor: [0, 0, 0], lineWidth: 0.5, textColor: [0, 0, 0] }
+    });
+  
+    doc.autoTable({
+      head: [["Campo", "Valor"]],
+      body: totals,
+      startY: doc.lastAutoTable.finalY + 10,
+      margin: { left: 10, right: 10 },
+      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] },
+      styles: { lineColor: [0, 0, 0], lineWidth: 0.5, textColor: [0, 0, 0] }
+    });
+  
+    doc.text("", 20, doc.lastAutoTable.finalY + 20);
+    doc.text("", 140, doc.lastAutoTable.finalY + 20);
+  
+    doc.save(`venta_${sale._id}.pdf`);
+  };
+
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(productSearch.toLowerCase())
   );
 
   const filteredSales = sales.filter(sale =>
-    sale._id.toLowerCase().includes(salesSearch.toLowerCase())
+    sale.products.some(product =>
+      product.product?.name.toLowerCase().includes(salesSearch.toLowerCase())
+    )
   );
 
   const getStatusBadgeClass = (status: string) => {
@@ -155,7 +276,7 @@ const Sales: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="flex items-center gap-3 mb-8">
-        <ShoppingCart className="w-8 h-8 text-blue-600" />
+        <ShoppingCart className="w-8 h-8 text-black" />
         <h1 className="text-3xl font-bold text-gray-900">Gestión de Ventas</h1>
       </div>
 
@@ -163,7 +284,7 @@ const Sales: React.FC = () => {
         {/* Formulario de Nueva Venta */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <Plus className="w-6 h-6 text-blue-600" />
+            <Plus className="w-6 h-6 text-black" />
             Nueva Venta
           </h2>
 
@@ -191,7 +312,7 @@ const Sales: React.FC = () => {
                 type="text"
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
                 placeholder="Buscar producto..."
               />
             </div>
@@ -204,7 +325,7 @@ const Sales: React.FC = () => {
               <select
                 value={selectedProduct}
                 onChange={(e) => setSelectedProduct(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
               >
                 <option value="">Selecciona un producto</option>
                 {filteredProducts.map((product) => (
@@ -225,13 +346,32 @@ const Sales: React.FC = () => {
                 min="1"
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Package className="w-4 h-4 text-gray-500" />
+                Cliente
+              </label>
+              <select
+                value={selectedClient}
+                onChange={(e) => setSelectedClient(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
+              >
+                <option value="">Selecciona un cliente</option>
+                {clients.map((client) => (
+                  <option key={client._id} value={client._id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <button
               onClick={handleSale}
-              className="w-full px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/20 transition-colors flex items-center justify-center gap-2"
+              className="w-full px-6 py-2.5 bg-black text-white font-medium rounded-lg hover:bg-gray-800 focus:ring-4 focus:ring-black/20 transition-colors flex items-center justify-center gap-2"
             >
               <ShoppingCart className="w-4 h-4" />
               Crear Venta
@@ -242,7 +382,7 @@ const Sales: React.FC = () => {
         {/* Lista de Ventas */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <Clock className="w-6 h-6 text-blue-600" />
+            <Clock className="w-6 h-6 text-black" />
             Historial de Ventas
           </h2>
 
@@ -255,8 +395,8 @@ const Sales: React.FC = () => {
               type="text"
               value={salesSearch}
               onChange={(e) => setSalesSearch(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-              placeholder="Buscar por ID de venta..."
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
+              placeholder="Buscar por nombre del producto..."
             />
           </div>
 
@@ -309,6 +449,13 @@ const Sales: React.FC = () => {
                     >
                       <Trash2 className="w-4 h-4" />
                       Eliminar
+                    </button>
+                    <button
+                      onClick={() => handlePrintPDF(sale)}
+                      className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 focus:ring-4 focus:ring-black/20 transition-colors flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Imprimir PDF
                     </button>
                   </div>
                 </div>

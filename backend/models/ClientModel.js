@@ -1,21 +1,25 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const clientSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
   },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   phone: {
     type: String,
     required: true,
   },
-  email: {
+  address: {
     type: String,
     required: true,
   },
-
 });
 
-const Client = mongoose.model('Client', clientSchema);
+const Client = mongoose.model("Client", clientSchema);
 
 export default Client;

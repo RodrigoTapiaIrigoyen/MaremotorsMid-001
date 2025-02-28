@@ -27,6 +27,11 @@ const saleSchema = new mongoose.Schema({
     enum: ['pendiente', 'aprobada', 'cancelada'],
     default: 'pendiente',
   },
+  client: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Client',
+    required: true,
+  },
 });
 
 const Sale = mongoose.model("Sale", saleSchema);

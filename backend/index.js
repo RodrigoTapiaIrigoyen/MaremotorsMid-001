@@ -14,6 +14,8 @@ import authRoutes from "./routes/authRoutes.js";
 import movementRoutes from './routes/movement.routes.js'; // Asegúrate de que la ruta sea correcta
 import receptionRoutes from './routes/reception.routes.js'; // Asegúrate de que la ruta sea correcta
 import productRoutes from "./routes/productRoutes.js";
+import serviceRoutes from "./routes/serviceRoutes.js"; // Importar rutas de servicios
+import unitRoutes from './routes/unitRoutes.js';
 
 import http from 'http';
 import { Server } from 'socket.io';
@@ -59,6 +61,8 @@ app.use("/api/auth", authRoutes);
 app.use('/api/movements', movementRoutes);
 app.use('/api/receptions', receptionRoutes);
 app.use('/api/products', productRoutes); // Conectar rutas de productos
+app.use('/api/services', serviceRoutes); // Conectar rutas de servicios
+app.use('/api/units', unitRoutes);
 
 // Conexión a MongoDB
 

@@ -74,16 +74,16 @@ export default function Catalog() {
     },
     {
       id: 'categories',
-      title: 'Categorías',
-      description: 'Gestión de categorías de productos y servicios',
+      title: 'KIT DE PRODUCTOS',
+      description: 'Gestión de KITs de productos ',
       icon: Tags,
       color: 'indigo',
       path: '/catalog/categories'
     },
     {
       id: 'status',
-      title: 'Estatus',
-      description: 'Configuración de estados y flujos de trabajo',
+      title: 'PROXIMAS FUNCIONES ',
+      description: '',
       icon: ClipboardList,
       color: 'pink',
       path: '/catalog/status'

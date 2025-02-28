@@ -8,7 +8,7 @@ export default function Categories() {
         <Tags className="h-8 w-8 text-indigo-500" />
         <div>
           <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-            Categorías
+            KITS DE PRODUCTOS
           </h2>
           <p className="mt-1 text-sm text-gray-500">
             Gestión de categorías de productos y servicios

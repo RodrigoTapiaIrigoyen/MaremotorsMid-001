@@ -6,13 +6,13 @@ const router = express.Router();
 // Ruta para obtener todas las cotizaciones
 router.get("/", getQuotes);
 
-// Ruta para crear una nueva cotización
+// Crear una nueva cotización
 router.post('/', createQuote);
 
-// Ruta para actualizar una cotización
+// Actualizar una cotización existente
 router.put('/:id', updateQuote);
 
-// Ruta para eliminar una cotización
+// Eliminar una cotización
 router.delete('/:id', deleteQuote);
 
 export default router;

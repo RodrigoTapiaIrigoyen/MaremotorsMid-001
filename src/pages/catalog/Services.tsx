@@ -1,54 +1,99 @@
-import React, { useState } from 'react';
-
-interface Service {
-  id: number;
-  name: string;
-  description: string;
-}
+import React, { useState, useEffect } from 'react';
+import { getServices, createService, deleteService, Service } from '../../services/services.services';
 
 const Services: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
-  const [newService, setNewService] = useState({ name: '', description: '' });
+  const [newService, setNewService] = useState({
+    name: '',
+    description: '',
+    price: 0,
+    category: '',
+    currency: 'MXN'
+  });
 
-  const handleAddService = () => {
-    const newId = services.length + 1;
-    setServices([...services, { id: newId, ...newService }]);
-    setNewService({ name: '', description: '' });
+  useEffect(() => {
+    const fetchServices = async () => {
+      const servicesData = await getServices();
+      setServices(servicesData);
+    };
+    fetchServices();
+  }, []);
+
+  const handleAddService = async () => {
+    const addedService = await createService(newService);
+    setServices([...services, addedService]);
+    setNewService({ name: '', description: '', price: 0, category: '', currency: 'MXN' });
   };
 
-  const handleDeleteService = (id: number) => {
-    setServices(services.filter((service) => service.id !== id));
+  const handleDeleteService = async (id: string) => {
+    await deleteService(id);
+    setServices(services.filter((service) => service._id !== id));
   };
 
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold">Gestión de Servicios</h1>
-      <p className="text-gray-600">Administra servicios de mantenimiento y reparación aquí.</p>
-      <div>
-        <input
-          type="text"
-          placeholder="Nombre del servicio"
-          value={newService.name}
-          onChange={(e) => setNewService({ ...newService, name: e.target.value })}
-          className="border p-2 mr-2"
-        />
-        <input
-          type="text"
-          placeholder="Descripción"
-          value={newService.description}
-          onChange={(e) => setNewService({ ...newService, description: e.target.value })}
-          className="border p-2 mr-2"
-        />
-        <button onClick={handleAddService} className="bg-green-500 text-white px-4 py-2">Añadir Servicio</button>
+    <div className="p-6 space-y-4 bg-gray-100 min-h-screen">
+      <h1 className="text-3xl font-bold text-center text-gray-800">Gestión de Servicios</h1>
+      <p className="text-gray-600 text-center mb-6">Administra servicios de mantenimiento y reparación aquí.</p>
+      <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Nombre del servicio"
+            value={newService.name}
+            onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+            className="border p-2 mr-2 rounded w-full mb-2"
+          />
+          <input
+            type="text"
+            placeholder="Descripción"
+            value={newService.description}
+            onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+            className="border p-2 mr-2 rounded w-full mb-2"
+          />
+          <input
+            type="number"
+            placeholder="Precio Venta"
+            value={newService.price}
+            onChange={(e) => setNewService({ ...newService, price: parseFloat(e.target.value) })}
+            className="border p-2 mr-2 rounded w-full mb-2"
+          />
+          <select
+            value={newService.category}
+            onChange={(e) => setNewService({ ...newService, category: e.target.value })}
+            className="border p-2 mr-2 rounded w-full mb-2"
+          >
+            <option value="">Selecciona una categoría</option>
+            <option value="Marina Seca">Marina Seca</option>
+            <option value="Mecánica">Mecánica</option>
+            <option value="Fibra de Vidrio">Fibra de Vidrio</option>
+            <option value="Pintura">Pintura</option>
+            <option value="Lavado">Lavado</option>
+            <option value="Remolque">Remolque</option>
+          </select>
+          <select
+            value={newService.currency}
+            onChange={(e) => setNewService({ ...newService, currency: e.target.value })}
+            className="border p-2 mr-2 rounded w-full mb-2"
+          >
+            <option value="MXN">Pesos Mexicanos</option>
+            <option value="USD">Dólares</option>
+          </select>
+          <button onClick={handleAddService} className="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600">Añadir Servicio</button>
+        </div>
+        <ul className="mt-4 space-y-4">
+          {services.map((service) => (
+            <li key={service._id} className="bg-white p-4 rounded-lg shadow flex justify-between items-center">
+              <div>
+                <span className="block text-lg font-semibold text-gray-800">{service.name}</span>
+                <span className="block text-gray-600">{service.description}</span>
+                <span className="block text-gray-600">{service.price} {service.currency}</span>
+                <span className="block text-gray-600">{service.category}</span>
+              </div>
+              <button onClick={() => handleDeleteService(service._id)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Eliminar</button>
+            </li>
+          ))}
+        </ul>
       </div>
-      <ul className="mt-4">
-        {services.map((service) => (
-          <li key={service.id} className="flex justify-between items-center">
-            <span>{service.name} - {service.description}</span>
-            <button onClick={() => handleDeleteService(service.id)} className="text-red-500">Eliminar</button>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 };

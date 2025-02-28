@@ -1,11 +1,11 @@
 import Sale from '../models/SalesModel.js';
 import Product from '../models/productModel.js';
+import Client from '../models/ClientModel.js';
 
 // Obtener todas las ventas
 export const getSales = async (req, res) => {
   try {
-    const sales = await Sale.find().populate('products.product');
-    console.log(sales); // Agregar este console.log para inspeccionar los datos
+    const sales = await Sale.find().populate('products.product').populate('client');
     res.json(sales);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener las ventas', error });
@@ -15,7 +15,13 @@ export const getSales = async (req, res) => {
 // Crear una nueva venta
 export const createSale = async (req, res) => {
   try {
-    const { products, total, date, status } = req.body;
+    const { products, total, date, status, client } = req.body;
+
+    // Validar el cliente
+    const clientExists = await Client.findById(client);
+    if (!clientExists) {
+      return res.status(404).json({ message: `Cliente con ID ${client} no encontrado` });
+    }
 
     // Validar los productos
     for (const item of products) {
@@ -35,6 +41,7 @@ export const createSale = async (req, res) => {
       total,
       date,
       status,
+      client,
     });
     await newSale.save();
 
@@ -47,12 +54,12 @@ export const createSale = async (req, res) => {
 // Actualizar una venta existente
 export const updateSale = async (req, res) => {
   const { id } = req.params;
-  const { products, total, date, status } = req.body;
+  const { products, total, date, status, client } = req.body;
 
   try {
     const updatedSale = await Sale.findByIdAndUpdate(
       id,
-      { products, total, date, status },
+      { products, total, date, status, client },
       { new: true }
     );
     res.status(200).json(updatedSale);

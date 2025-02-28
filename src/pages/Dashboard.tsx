@@ -28,30 +28,50 @@ export default function Dashboard() {
   ]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/sales') // Ruta de tu API
-      .then((res) => {
-        const data = res.data;
-        console.log('Datos recibidos:', data); // Verifica los datos recibidos
+    const fetchData = async () => {
+      try {
+        const [salesResponse, quotesResponse, clientsResponse, productsResponse] = await Promise.all([
+          axios.get('http://localhost:5000/api/sales'),
+          axios.get('http://localhost:5000/api/quotes'),
+          axios.get('http://localhost:5000/api/clients'),
+          axios.get('http://localhost:5000/api/products'),
+        ]);
 
-        // Mapeamos los datos correctamente para el gráfico
-        const formattedSales = data.map((sale: any) => ({
-          name: sale.product,  // Usamos 'product' como el nombre
-          sales: sale.totalPrice,  // Usamos 'totalPrice' como las ventas
+        const salesData = salesResponse.data;
+        const quotesData = quotesResponse.data;
+        const clientsData = clientsResponse.data;
+        const productsData = productsResponse.data;
+
+        // Formatear los datos de ventas para el gráfico
+        const formattedSales = salesData.map((sale: any) => ({
+          name: sale.product,
+          sales: sale.totalPrice,
         }));
 
-        console.log('Datos para el gráfico:', formattedSales); // Verifica los datos para el gráfico
+        // Calcular las métricas
+        const totalSales = salesData.reduce((acc: number, sale: any) => acc + (sale.totalPrice || 0), 0) +
+          quotesData.filter((quote: any) => quote.status === 'approved').reduce((acc: number, quote: any) => acc + (quote.total || 0), 0);
 
-        setSales(formattedSales); // Seteamos los datos para el gráfico
+        const newCustomers = clientsData.length;
 
-        // Actualiza las métricas generales
+        const pendingQuotes = quotesData.filter((quote: any) => quote.status === 'pending').length;
+
+        const inventoryAlerts = productsData.filter((product: any) => product.stock < product.minStock).length;
+
+        // Actualizar el estado con las métricas calculadas
+        setSales(formattedSales);
         setStats([
-          { name: 'Total Sales', value: `$${data.reduce((acc: number, s: any) => acc + s.totalPrice, 0)}`, change: '+12.5%', icon: Banknote },
-          { name: 'New Customers', value: data.length.toString(), change: '+5.2%', icon: Users },
-          { name: 'Pending Quotes', value: '15', change: '-2.3%', icon: ShoppingCart },
-          { name: 'Inventory Alerts', value: '3', change: '+0', icon: AlertTriangle },
+          { name: 'Total Sales', value: `$${totalSales.toFixed(2)}`, change: '+12.5%', icon: Banknote },
+          { name: 'New Customers', value: newCustomers.toString(), change: '+5.2%', icon: Users },
+          { name: 'Pending Quotes', value: pendingQuotes.toString(), change: '-2.3%', icon: ShoppingCart },
+          { name: 'Inventory Alerts', value: inventoryAlerts.toString(), change: '+0', icon: AlertTriangle },
         ]);
-      })
-      .catch((err) => console.error('Error loading sales data:', err));
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (

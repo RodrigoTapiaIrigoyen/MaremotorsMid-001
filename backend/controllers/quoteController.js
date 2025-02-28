@@ -1,9 +1,11 @@
 import Quote from '../models/QuoteModel.js';
+import Product from '../models/productModel.js';
+import Service from '../models/serviceModel.js';
 
 // Obtener todas las cotizaciones
 export const getQuotes = async (req, res) => {
   try {
-    const quotes = await Quote.find();
+    const quotes = await Quote.find().populate('items.productId').populate('items.serviceId');
     res.json(quotes);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener las cotizaciones" });
@@ -12,30 +14,85 @@ export const getQuotes = async (req, res) => {
 
 // Crear una nueva cotización
 export const createQuote = async (req, res) => {
-  const { reception, date, client, unit, document, status } = req.body;
-
-  const newQuote = new Quote({ reception, date, client, unit, document, status });
-
   try {
-    const savedQuote = await newQuote.save();
-    res.status(201).json(savedQuote);
-  } catch (err) {
-    res.status(500).json({ message: 'Error al guardar la cotización', error: err });
+    const { reception, date, client, user, mechanic, documentType, status, discount, items } = req.body;
+
+    console.log('Received quote data:', req.body); // Agregar depuración aquí
+
+    let totalWithoutDiscount = 0;
+
+    for (const item of items) {
+      if (item.type === 'product') {
+        const product = await Product.findById(item.productId);
+        if (product) {
+          totalWithoutDiscount += product.price * item.quantity;
+        } else {
+          return res.status(400).json({ message: `Producto con ID ${item.productId} no encontrado` });
+        }
+      } else if (item.type === 'service') {
+        const service = await Service.findById(item.serviceId);
+        if (service) {
+          totalWithoutDiscount += service.price * item.quantity;
+        } else {
+          return res.status(400).json({ message: `Servicio con ID ${item.serviceId} no encontrado` });
+        }
+      }
+    }
+
+    const total = totalWithoutDiscount - discount;
+
+    const newQuote = new Quote({ reception, date, client, user, mechanic, documentType, status, discount, items, total });
+    await newQuote.save();
+    res.status(201).json(newQuote);
+  } catch (error) {
+    console.error('Error creating quote:', error); // Agregar depuración aquí
+    res.status(400).json({ message: error.message });
   }
 };
 
 // Actualizar una cotización
 export const updateQuote = async (req, res) => {
   const { id } = req.params;
-  const { reception, date, client, unit, document, status } = req.body;
+  const { reception, date, client, user, mechanic, documentType, status, discount, items } = req.body;
 
   try {
-    const updatedQuote = await Quote.findByIdAndUpdate(id, { reception, date, client, unit, document, status }, { new: true });
-    if (!updatedQuote) {
+    // Verificar si la cotización existe
+    const existingQuote = await Quote.findById(id);
+    if (!existingQuote) {
       return res.status(404).json({ message: 'Cotización no encontrada' });
     }
+
+    let totalWithoutDiscount = 0;
+
+    for (const item of items) {
+      if (item.type === 'product') {
+        const product = await Product.findById(item.productId);
+        if (product) {
+          totalWithoutDiscount += product.price * item.quantity;
+        } else {
+          return res.status(400).json({ message: `Producto con ID ${item.productId} no encontrado` });
+        }
+      } else if (item.type === 'service') {
+        const service = await Service.findById(item.serviceId);
+        if (service) {
+          totalWithoutDiscount += service.price * item.quantity;
+        } else {
+          return res.status(400).json({ message: `Servicio con ID ${item.serviceId} no encontrado` });
+        }
+      }
+    }
+
+    const total = totalWithoutDiscount - discount;
+
+    // Actualizar la cotización
+    const updatedQuote = await Quote.findByIdAndUpdate(id, 
+      { reception, date, client, user, mechanic, documentType, status, discount, total, items }, 
+      { new: true }
+    ).populate('items.productId').populate('items.serviceId');
+
     res.json(updatedQuote);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Error al actualizar la cotización', error: err });
   }
 };
