@@ -5,6 +5,10 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  partNumber: {
+    type: String,
+    required: true,
+  },
   price: {
     type: Number,
     required: true,
@@ -25,6 +29,24 @@ const productSchema = new mongoose.Schema({
   subsection: {
     type: String,
     required: true,
+  },
+  purchasePrice: {
+    type: Number,
+    required: true,
+  },
+  condition: {
+    type: String,
+    required: true,
+    enum: ['new', 'used', 'refurbished'],
+  },
+  exchangeRate: {
+    type: Number,
+    required: true,
+  },
+  currencyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Currency',
+    required: true, 
   },
 });
 

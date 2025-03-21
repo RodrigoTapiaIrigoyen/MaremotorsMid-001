@@ -6,7 +6,6 @@ interface Client {
   name: string;
   email: string;
   phone: string;
-  address: string;
 }
 
 interface Product {
@@ -39,8 +38,7 @@ const Clients: React.FC = () => {
     _id: "",
     name: "",
     email: "",
-    phone: "",
-    address: ""
+    phone: ""
   });
 
   useEffect(() => {
@@ -91,8 +89,7 @@ const Clients: React.FC = () => {
           _id: "",
           name: "",
           email: "",
-          phone: "",
-          address: ""
+          phone: ""
         });
         const response = await axios.get("http://localhost:5000/api/clients");
         setClients(response.data);
@@ -155,17 +152,6 @@ const Clients: React.FC = () => {
               required
             />
           </div>
-          <div className="mb-4">
-            <label className="block text-gray-700">Dirección</label>
-            <input
-              type="text"
-              name="address"
-              value={clientForm?.address || ""}
-              onChange={handleClientFormChange}
-              className="border p-2 rounded w-full"
-              required
-            />
-          </div>
           <button
             type="submit"
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -182,7 +168,6 @@ const Clients: React.FC = () => {
                 <span className="block text-lg font-semibold text-gray-800">{client.name}</span>
                 <span className="block text-gray-600">{client.email}</span>
                 <span className="block text-gray-600">{client.phone}</span>
-                <span className="block text-gray-600">{client.address}</span>
               </div>
               <div className="flex space-x-2">
                 <button

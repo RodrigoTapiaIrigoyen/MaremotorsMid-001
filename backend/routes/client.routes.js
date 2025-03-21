@@ -13,7 +13,18 @@ router.get('/', async (req, res) => {  // Cambié /clients por solo / porque el 
     res.status(500).json({ message: 'Error al obtener los clientes', error: err });
   }
 });
-
+// Obtener un cliente por ID
+router.get('/:id', async (req, res) => {
+  try {
+    const client = await Client.findById(req.params.id);
+    if (!client) {
+      return res.status(404).json({ message: 'Cliente no encontrado' });
+    }
+    res.json(client);
+  } catch (err) {
+    res.status(500).json({ message: 'Error al obtener el cliente', error: err });
+  }
+});
 // Crear un nuevo cliente
 router.post('/', async (req, res) => {  // Aquí igual, sin el prefijo '/clients'
   try {

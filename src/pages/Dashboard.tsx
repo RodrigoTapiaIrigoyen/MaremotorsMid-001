@@ -36,28 +36,36 @@ export default function Dashboard() {
           axios.get('http://localhost:5000/api/clients'),
           axios.get('http://localhost:5000/api/products'),
         ]);
-
+  
         const salesData = salesResponse.data;
         const quotesData = quotesResponse.data;
         const clientsData = clientsResponse.data;
         const productsData = productsResponse.data;
-
+  
         // Formatear los datos de ventas para el gráfico
         const formattedSales = salesData.map((sale: any) => ({
           name: sale.product,
           sales: sale.totalPrice,
         }));
-
+  
         // Calcular las métricas
-        const totalSales = salesData.reduce((acc: number, sale: any) => acc + (sale.totalPrice || 0), 0) +
-          quotesData.filter((quote: any) => quote.status === 'approved').reduce((acc: number, quote: any) => acc + (quote.total || 0), 0);
-
+        const totalSalesFromSales = salesData.reduce(
+          (acc: number, sale: any) => acc + (sale.totalPrice || 0),
+          0
+        );
+  
+        const totalSalesFromQuotes = quotesData
+          .filter((quote: any) => quote.status === 'approved')
+          .reduce((acc: number, quote: any) => acc + (quote.total || 0), 0);
+  
+        const totalSales = totalSalesFromSales + totalSalesFromQuotes;
+  
         const newCustomers = clientsData.length;
-
+  
         const pendingQuotes = quotesData.filter((quote: any) => quote.status === 'pending').length;
-
+  
         const inventoryAlerts = productsData.filter((product: any) => product.stock < product.minStock).length;
-
+  
         // Actualizar el estado con las métricas calculadas
         setSales(formattedSales);
         setStats([
@@ -70,7 +78,7 @@ export default function Dashboard() {
         console.error('Error fetching data:', error);
       }
     };
-
+  
     fetchData();
   }, []);
 

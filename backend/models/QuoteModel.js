@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import Product from './productModel.js';
 import Service from './serviceModel.js';
+import Currency from './currencyModel.js'; // Asegúrate de tener un modelo de Currency
 
 const itemSchema = new mongoose.Schema({
   productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
@@ -38,7 +39,14 @@ quoteSchema.pre('validate', async function (next) {
         if (typeof product.price !== 'number') {
           return next(new Error(`El producto ${product.name} no tiene precio válido.`));
         }
-        itemTotal = product.price * item.quantity;
+
+        // Obtener la tasa de cambio
+        const currency = await Currency.findById(product.currencyId);
+        const exchangeRate = currency ? currency.exchangeRate : 1;
+
+        // Convertir el precio a la moneda base (pesos mexicanos)
+        const priceInBaseCurrency = product.price * exchangeRate;
+        itemTotal = priceInBaseCurrency * item.quantity;
       }
 
       if (item.type === 'service' && item.serviceId) {

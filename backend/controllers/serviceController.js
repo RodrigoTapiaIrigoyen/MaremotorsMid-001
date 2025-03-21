@@ -8,7 +8,19 @@ export const getAllServices = async (req, res) => {
     res.status(500).json({ message: 'Error fetching services', error });
   }
 };
-
+// Obtener un servicio por ID
+export const getServiceById = async (req, res) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    if (!service) {
+      return res.status(404).json({ message: 'Servicio no encontrado' });
+    }
+    res.json(service);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener el servicio' });
+  }
+};
 export const createService = async (req, res) => {
   try {
     const { name, description, price, category, currency } = req.body;

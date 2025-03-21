@@ -79,3 +79,23 @@ export const deleteSale = async (req, res) => {
     res.status(500).json({ message: 'Error al eliminar la venta', error });
   }
 };
+// Aprobar una venta
+export const approveSale = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const sale = await Sale.findByIdAndUpdate(
+      id,
+      { status: 'aprobada' }, // Cambiar el estado a "aprobada"
+      { new: true }
+    );
+
+    if (!sale) {
+      return res.status(404).json({ message: 'Venta no encontrada' });
+    }
+
+    res.status(200).json(sale);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al aprobar la venta', error });
+  }
+};

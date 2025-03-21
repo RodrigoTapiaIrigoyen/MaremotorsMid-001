@@ -7,7 +7,6 @@ const unitSchema = mongoose.Schema({
   color: { type: String, required: true },
   plates: { type: String, required: true },
   client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
-  status: { type: String, required: true },
 }, {
   timestamps: true,
 });

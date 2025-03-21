@@ -1,4 +1,3 @@
-// backend/models/ReceptionModel.js
 import mongoose from 'mongoose';
 
 const receptionSchema = new mongoose.Schema({
@@ -52,7 +51,8 @@ const receptionSchema = new mongoose.Schema({
     us: { type: Boolean, default: false },
     tornilleria: { type: Boolean, default: false },
   },
-  fuelTank: { type: Boolean, default: false },
+  fuelTank: { type: String, required: true },
+  kilometers: { type: String, required: true },
 }, {
   timestamps: true,
 });

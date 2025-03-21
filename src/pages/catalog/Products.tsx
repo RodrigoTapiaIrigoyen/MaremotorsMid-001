@@ -9,11 +9,21 @@ const Products: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [products, setProducts] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
 
   const refreshProducts = () => setRefresh(!refresh);
 
   const handleEditProduct = (product: any) => {
     setProductToEdit(product);
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/products/${productId}`);
+      refreshProducts();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
   };
 
   useEffect(() => {
@@ -25,6 +35,15 @@ const Products: React.FC = () => {
       })
       .catch((err) => console.error(err));
   }, [refresh]);
+
+  useEffect(() => {
+    // Obtener monedas
+    axios.get("http://localhost:5000/api/currencies")
+      .then((response) => {
+        setCurrencies(response.data);
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   // Filtrar productos en función del texto de búsqueda
   const filteredProducts = products.filter((product: any) =>
@@ -57,8 +76,8 @@ const Products: React.FC = () => {
           </ul>
         </div>
       )}
-      <ProductForm onProductCreated={refreshProducts} productToEdit={productToEdit} />
-      <ProductList products={filteredProducts} onEditProduct={handleEditProduct} />
+      <ProductForm onProductCreated={refreshProducts} productToEdit={productToEdit} currencies={currencies} />
+      <ProductList products={filteredProducts} onEditProduct={handleEditProduct} onDeleteProduct={handleDeleteProduct} />
     </div>
   );
 };

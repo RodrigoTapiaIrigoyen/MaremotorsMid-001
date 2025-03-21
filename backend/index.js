@@ -16,6 +16,9 @@ import receptionRoutes from './routes/reception.routes.js'; // Asegúrate de que
 import productRoutes from "./routes/productRoutes.js";
 import serviceRoutes from "./routes/serviceRoutes.js"; // Importar rutas de servicios
 import unitRoutes from './routes/unitRoutes.js';
+import currencyRoutes from './routes/currencyRoutes.js';
+import exchangeRateRoutes from './routes/exchangeRateRoutes.js';
+import reportsRoutes from "./routes/reports.routes.js"; // Importa las rutas de reports
 
 import http from 'http';
 import { Server } from 'socket.io';
@@ -63,6 +66,9 @@ app.use('/api/receptions', receptionRoutes);
 app.use('/api/products', productRoutes); // Conectar rutas de productos
 app.use('/api/services', serviceRoutes); // Conectar rutas de servicios
 app.use('/api/units', unitRoutes);
+app.use('/api/currencies', currencyRoutes);
+app.use('/api/exchangeRates', exchangeRateRoutes);
+app.use("/api/reports", reportsRoutes); // Agrega las rutas de reports
 
 // Conexión a MongoDB
 

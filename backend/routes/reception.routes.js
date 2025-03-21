@@ -1,4 +1,3 @@
-// backend/routes/reception.routes.js
 import express from 'express';
 import { getReceptions, createReception, updateReception, deleteReception, generatePDF } from '../controllers/receptionController.js';
 

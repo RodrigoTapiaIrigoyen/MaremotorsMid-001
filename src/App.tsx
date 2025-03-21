@@ -24,30 +24,31 @@ import Status from './pages/catalog/Status';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="reception" element={<Reception />} />
-          <Route path="quotes" element={<Quotes />} />
-          <Route path="sales" element={<Sales />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="catalog" element={<Catalog />} />
-          <Route path="catalog/products" element={<Products />} />
-          <Route path="catalog/services" element={<Services />} />
-          <Route path="catalog/units" element={<Units />} />
-          <Route path="catalog/currencies" element={<Currencies />} />
-          <Route path="catalog/categories" element={<Categories />} />
-          <Route path="catalog/status" element={<Status />} />
-          <Route path="clients" element={<Clients />} />
-          <Route path="mechanics" element={<Mechanics />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="users" element={<Users />} />
-
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <div style={{ zoom: 0.8 }}> {/* Escala todo al 80% */}
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="reception" element={<Reception />} />
+            <Route path="quotes" element={<Quotes />} />
+            <Route path="sales" element={<Sales />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="catalog" element={<Catalog />} />
+            <Route path="catalog/products" element={<Products />} />
+            <Route path="catalog/services" element={<Services />} />
+            <Route path="catalog/units" element={<Units />} />
+            <Route path="catalog/currencies" element={<Currencies />} />
+            <Route path="catalog/categories" element={<Categories />} />
+            <Route path="catalog/status" element={<Status />} />
+            <Route path="clients" element={<Clients />} />
+            <Route path="mechanics" element={<Mechanics />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="users" element={<Users />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </div>
   );
 }
 

@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, FileText, Download, ClipboardCheck, ChevronRight, Package2, Wrench, DollarSign } from 'lucide-react';
 
-const INITIAL_ITEM = { productId: '', serviceId: '', quantity: 1, type: 'product', discount: 0 };
+const INITIAL_ITEM = { productId: '', serviceId: '', quantity: 1, type: 'product', discount: 0, currency: 'USD' };
 
 const QuoteForm = ({ onSubmit, initialQuote }) => {
   const [formData, setFormData] = useState({
@@ -48,7 +48,8 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
         items: initialQuote.items.map(item => ({
           ...item,
           productId: item.productId?._id || '',
-          serviceId: item.serviceId?._id || ''
+          serviceId: item.serviceId?._id || '',
+          currency: item.currency || 'USD'
         }))
       });
     }
@@ -72,17 +73,37 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
       items: prev.items.filter((_, i) => i !== index),
     }));
   };
-
+  
   const calculateTotal = (items, discount, withIVA = false) => {
     const subtotal = items.reduce((sum, item) => {
+      const product = resources.products.find(p => p._id === item.productId);
       const price = item.type === 'product'
-        ? resources.products.find(p => p._id === item.productId)?.price || 0
+        ? product?.price || 0
         : resources.services.find(s => s._id === item.serviceId)?.price || 0;
-      const itemTotal = price * item.quantity * (1 - (item.discount || 0) / 100);
+      const exchangeRate = item.type === 'product' ? product?.exchangeRate || 1 : 1;
+      const itemTotal = (price * item.quantity * exchangeRate) * (1 - (item.discount || 0) / 100);
       return sum + itemTotal;
     }, 0);
     const afterDiscount = subtotal - (subtotal * (discount || 0) / 100);
     return withIVA ? afterDiscount * 1.16 : afterDiscount;
+  };
+
+  const calculateItemTotal = (item) => {
+    const itemData = item.type === 'product'
+      ? resources.products.find(p => p._id === item.productId)
+      : resources.services.find(s => s._id === item.serviceId);
+
+    const price = itemData?.price || 0;
+    const exchangeRate = item.type === 'product' ? itemData?.exchangeRate || 1 : 1;
+    const importe = price * item.quantity * exchangeRate;
+    const importeConDescuento = importe * (1 - (item.discount || 0) / 100);
+    
+    return {
+      price,
+      importe,
+      importeConDescuento,
+      itemData
+    };
   };
 
   const handleSubmit = async (e) => {
@@ -106,12 +127,11 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
       let response;
       if (initialQuote?._id) {
         response = await axios.put(`http://localhost:5000/api/quotes/${initialQuote._id}`, quoteData);
-        window.location.reload(); // Recargar la página después de actualizar la cotización
+        window.location.reload();
       } else {
         response = await axios.post('http://localhost:5000/api/quotes', quoteData);
       }
 
-      // If the status is approved, update the product stock and customer history
       if (status === 'approved') {
         for (const item of validItems) {
           if (item.type === 'product' && item.productId) {
@@ -123,7 +143,6 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
           }
         }
 
-        // Add the sale to the customer's history
         const sale = {
           date: formData.date,
           total,
@@ -134,7 +153,8 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
 
       setSuccessMessage('Quote created successfully!');
       setErrorMessage(null);
-      onSubmit(response.data); // Llamar a la función onSubmit con los datos de la cotización creada o actualizada
+      onSubmit(response.data);
+      window.location.reload();
     } catch (error) {
       console.error('Error saving quote:', error);
       setErrorMessage('Error saving quote. Please try again.');
@@ -153,7 +173,7 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
     const client = resources.clients.find(c => c._id === formData.client)?.name;
 
     const doc = new jsPDF();
-    doc.addImage('src/logo/Maremotors.png', 'PNG', 10, 10, 30, 20);
+    doc.addImage('src/logo/Maremotors.png', 'PNG', 10, 10, 20, 20);
 
     doc.setFontSize(16);
     doc.setTextColor(40);
@@ -198,7 +218,8 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
 
       const price = itemData?.price || 0;
       const discount = item.discount || 0;
-      const importe = price * item.quantity;
+      const exchangeRate = item.type === 'product' ? itemData?.exchangeRate || 1 : 1;
+      const importe = price * item.quantity * exchangeRate;
       const importeConDescuento = importe * (1 - discount / 100);
 
       return [
@@ -246,105 +267,296 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
   };
 
   return (
-    <>
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-lg shadow-md max-w-3xl mx-auto">
-        <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-          {initialQuote ? 'Edit Quote' : 'Create Quote'}
-        </h2>
+    <div className="min-h-screen animate-gradient py-12 px-4">
+      <form onSubmit={handleSubmit} className="max-w-6xl mx-auto">
+        <div className="glass-effect rounded-3xl p-8 shadow-soft">
+          {/* Header Section */}
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+              {initialQuote ? 'Editar Cotización' : 'Nueva Cotización'}
+            </h2>
+            <div className="mt-4 inline-flex items-center px-4 py-2 bg-white/50 rounded-full">
+              <span className="text-gray-600">Sistema de Cotizaciones</span>
+              <ChevronRight className="h-4 w-4 mx-2 text-gray-400" />
+              <span className="font-semibold text-gray-800">Maremotors YAMAHA</span>
+            </div>
+          </div>
 
-        {successMessage && <p className="text-green-500">{successMessage}</p>}
-        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <Input label="Reception" name="reception" value={formData.reception} onChange={handleChange} />
-          <Input label="Date" type="date" name="date" value={formData.date} onChange={handleChange} />
-          <Select label="Client" name="client" value={formData.client || ''} onChange={handleChange} options={resources.clients} />
-          <Input label="User" name="user" value={formData.user} onChange={handleChange} />
-          <Select label="Mechanic" name="mechanic" value={formData.mechanic || ''} onChange={handleChange} options={resources.mechanics} />
-          <Select label="Document Type" name="documentType" value={formData.documentType} onChange={handleChange} options={[{ _id: 'fiscal', name: 'Fiscal' }, { _id: 'no fiscal', name: 'No Fiscal' }]} />
-          <Select label="Status" name="status" value={formData.status} onChange={handleChange} options={[{ _id: 'pending', name: 'Pending' }, { _id: 'approved', name: 'Approved' }]} />
-          <Input label="Discount (%)" type="number" name="discount" value={formData.discount} onChange={handleChange} />
-        </div>
-
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">Items</h3>
-          {formData.items.map((item, index) => (
-            <div key={index} className="border p-4 rounded-md mb-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Select label="Type" value={item.type} onChange={(e) => handleItemChange(index, 'type', e.target.value)} options={[{ _id: 'product', name: 'Product' }, { _id: 'service', name: 'Service' }]} />
-                {item.type === 'product' ? (
-                  <Select label="Product" value={item.productId || ''} onChange={(e) => handleItemChange(index, 'productId', e.target.value)} options={resources.products} />
-                ) : (
-                  <Select label="Service" value={item.serviceId || ''} onChange={(e) => handleItemChange(index, 'serviceId', e.target.value)} options={resources.services} />
-                )}
-                <Input label="Quantity" type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))} min={1} />
-                <Input label="Discount (%)" type="number" value={item.discount} onChange={(e) => handleItemChange(index, 'discount', Number(e.target.value))} min={0} max={100} />
-                <button type="button" onClick={() => handleRemoveItem(index)} className="text-red-500 hover:text-red-700 font-semibold">
-                  <Trash2 className="h-4 w-4" />
-                  Remove
-                </button>
+          {/* Messages */}
+          {successMessage && (
+            <div className="mb-8 transform hover-scale">
+              <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <ClipboardCheck className="h-5 w-5 text-green-400" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-green-800">{successMessage}</p>
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
+          )}
+          {errorMessage && (
+            <div className="mb-8 transform hover-scale">
+              <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-xl">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <Trash2 className="h-5 w-5 text-red-400" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-red-800">{errorMessage}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-          <button type="button" onClick={() => setFormData(prev => ({ ...prev, items: [...prev.items, INITIAL_ITEM] }))} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-            <Plus className="h-4 w-4" />
-            Add Item
-          </button>
-        </div>
+          {/* Form Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <div className="space-y-6">
+              <Input label="Recepción" name="reception" value={formData.reception} onChange={handleChange} />
+              <Input label="Fecha" type="date" name="date" value={formData.date} onChange={handleChange} />
+              <Select label="Cliente" name="client" value={formData.client || ''} onChange={handleChange} options={resources.clients} />
+              <Input label="Usuario" name="user" value={formData.user} onChange={handleChange} />
+            </div>
+            <div className="space-y-6">
+              <Select label="Mecánico" name="mechanic" value={formData.mechanic || ''} onChange={handleChange} options={resources.mechanics} />
+              <Select label="Tipo de Documento" name="documentType" value={formData.documentType} onChange={handleChange} options={[{ _id: 'fiscal', name: 'Fiscal' }, { _id: 'no fiscal', name: 'No Fiscal' }]} />
+              <Select label="Estado" name="status" value={formData.status} onChange={handleChange} options={[{ _id: 'pending', name: 'Pendiente' }, { _id: 'approved', name: 'Aprobado' }]} />
+              <Input label="Descuento (%)" type="number" name="discount" value={formData.discount} onChange={handleChange} />
+            </div>
+          </div>
 
-        <div className="flex gap-4 mt-6">
-          <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-            {initialQuote ? 'Update Quote' : 'Create Quote'}
-          </button>
-          <button type="button" onClick={handleGeneratePDF} className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
-            Download PDF
-          </button>
+          {/* Items Section */}
+          <div className="bg-white/50 rounded-2xl p-6 mb-8">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Package2 className="h-5 w-5 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800">Artículos</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, items: [...prev.items, INITIAL_ITEM] }))}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Agregar Artículo</span>
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {formData.items.map((item, index) => {
+                const { price, importe, importeConDescuento, itemData } = calculateItemTotal(item);
+                
+                return (
+                  <div key={index} className="bg-white rounded-xl p-6 shadow-md hover-scale">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="col-span-1 md:col-span-2 lg:col-span-1">
+                        <Select
+                          label="Tipo"
+                          value={item.type}
+                          onChange={(e) => handleItemChange(index, 'type', e.target.value)}
+                          options={[
+                            { _id: 'product', name: 'Producto' },
+                            { _id: 'service', name: 'Servicio' }
+                          ]}
+                          icon={item.type === 'product' ? Package2 : Wrench}
+                        />
+                      </div>
+                      <div className="col-span-1 md:col-span-2 lg:col-span-1">
+                        {item.type === 'product' ? (
+                          <Select
+                            label="Producto"
+                            value={item.productId || ''}
+                            onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                            options={resources.products}
+                            icon={Package2}
+                          />
+                        ) : (
+                          <Select
+                            label="Servicio"
+                            value={item.serviceId || ''}
+                            onChange={(e) => handleItemChange(index, 'serviceId', e.target.value)}
+                            options={resources.services}
+                            icon={Wrench}
+                          />
+                        )}
+                      </div>
+                      <Input
+                        label="Cantidad"
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                        min={1}
+                      />
+                      <Input
+                        label="Descuento (%)"
+                        type="number"
+                        value={item.discount}
+                        onChange={(e) => handleItemChange(index, 'discount', Number(e.target.value))}
+                        min={0}
+                        max={100}
+                      />
+
+                      {itemData && (
+                        <div className="col-span-1 md:col-span-2 lg:col-span-4">
+                          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-gray-600">Precio unitario:</span>
+                              <span className="font-semibold text-blue-600">${price.toFixed(2)}</span>
+                            </div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-gray-600">Subtotal:</span>
+                              <span className="font-semibold text-blue-600">${importe.toFixed(2)}</span>
+                            </div>
+                            {item.discount > 0 && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-600">Total con descuento:</span>
+                                <span className="font-semibold text-green-600">${importeConDescuento.toFixed(2)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(index)}
+                      className="mt-4 flex items-center gap-2 text-red-500 hover:text-red-700 transition-colors duration-200"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Eliminar</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Total Summary */}
+          <div className="bg-white rounded-xl p-6 shadow-md mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <DollarSign className="h-5 w-5 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800">Resumen</h3>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Subtotal:</span>
+                <span className="text-xl font-semibold">${calculateTotal(formData.items, 0).toFixed(2)}</span>
+              </div>
+              {formData.discount > 0 && (
+                <div className="flex justify-between items-center text-green-600">
+                  <span>Descuento general ({formData.discount}%):</span>
+                  <span className="text-xl font-semibold">
+                    -${(calculateTotal(formData.items, 0) * (formData.discount / 100)).toFixed(2)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                <span className="text-gray-800 font-medium">Total:</span>
+                <span className="text-2xl font-bold text-blue-600">
+                  ${calculateTotal(formData.items, formData.discount).toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-wrap items-center justify-end gap-4 pt-6">
+            <button
+              type="button"
+              onClick={handleGeneratePDF}
+              className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              <Download className="h-5 w-5" />
+              <span>Generar PDF</span>
+            </button>
+            <button
+              type="submit"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              <ClipboardCheck className="h-5 w-5" />
+              <span>{initialQuote ? 'Actualizar' : 'Crear'} Cotización</span>
+            </button>
+          </div>
         </div>
       </form>
 
+      {/* IVA Modal */}
       {showIVAModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">¿Desea incluir IVA (16%)?</h3>
-            <p className="mb-4">
-              Subtotal: ${calculateTotal(formData.items, formData.discount).toFixed(2)}
-              <br />
-              Total con IVA: ${calculateTotal(formData.items, formData.discount, true).toFixed(2)}
-            </p>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl transform hover-scale">
+            <h3 className="text-2xl font-semibold text-gray-800 mb-6">¿Incluir IVA (16%)?</h3>
+            <div className="space-y-4 mb-8">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="text-xl font-semibold">${calculateTotal(formData.items, formData.discount).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center pt-4 border-t">
+                <span className="text-gray-600">Total con IVA</span>
+                <span className="text-xl font-semibold text-blue-600">${calculateTotal(formData.items, formData.discount, true).toFixed(2)}</span>
+              </div>
+            </div>
             <div className="flex justify-end gap-4">
-              <button onClick={() => generatePDF(false)} className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+              <button
+                onClick={() => generatePDF(false)}
+                className="px-6 py-3 text-gray-700 hover:text-gray-900 transition-colors duration-200"
+              >
                 Sin IVA
               </button>
-              <button onClick={() => generatePDF(true)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              <button
+                onClick={() => generatePDF(true)}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              >
                 Con IVA
               </button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 
 const Input = ({ label, ...props }) => (
   <div className="flex flex-col">
-    <label className="text-sm font-medium text-gray-600">{label}:</label>
-    <input {...props} className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+    <label className="text-sm font-medium text-gray-700 mb-2">{label}</label>
+    <input
+      {...props}
+      className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 input-focus"
+      required
+    />
   </div>
 );
 
-const Select = ({ label, options, ...props }) => (
+const Select = ({ label, options, icon: Icon, ...props }) => (
   <div className="flex flex-col">
-    <label className="text-sm font-medium text-gray-600">{label}:</label>
-    <select {...props} className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-      <option value="">Select {label}</option>
-      {options.map((option) => (
-        <option key={option._id} value={option._id}>
-          {option.name}
-        </option>
-      ))}
-    </select>
+    <label className="text-sm font-medium text-gray-700 mb-2">{label}</label>
+    <div className="relative">
+      {Icon && (
+        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+          <Icon className="h-5 w-5" />
+        </div>
+      )}
+      <select
+        {...props}
+        className={`w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 input-focus ${Icon ? 'pl-10' : ''}`}
+        required
+      >
+        <option value="">Seleccionar {label}</option>
+        {options.map((option) => (
+          <option key={option._id} value={option._id}>
+            {option.name}
+          </option>
+        ))}
+      </select>
+    </div>
   </div>
 );
 

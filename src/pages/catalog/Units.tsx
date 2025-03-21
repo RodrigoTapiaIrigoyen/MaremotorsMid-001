@@ -9,7 +9,6 @@ interface Unit {
   color: string;
   plates: string;
   client: string;
-  status: string;
 }
 
 interface Client {
@@ -20,9 +19,9 @@ interface Client {
 const Units: React.FC = () => {
   const [units, setUnits] = useState<Unit[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [newUnit, setNewUnit] = useState({ model: '', type: '', brand: '', color: '', plates: '', client: '', status: '' });
+  const [newUnit, setNewUnit] = useState({ model: '', type: '', brand: '', color: '', plates: '', client: '' });
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>(''); // Definir searchQuery en el estado
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     const fetchUnitsAndClients = async () => {
@@ -43,7 +42,7 @@ const Units: React.FC = () => {
     try {
       const response = await axios.post('http://localhost:5000/api/units', newUnit);
       setUnits([...units, response.data]);
-      setNewUnit({ model: '', type: '', brand: '', color: '', plates: '', client: '', status: '' });
+      setNewUnit({ model: '', type: '', brand: '', color: '', plates: '', client: '' });
     } catch (error) {
       console.error('Error adding unit:', error);
     }
@@ -66,21 +65,27 @@ const Units: React.FC = () => {
       brand: unit.brand,
       color: unit.color,
       plates: unit.plates,
-      client: unit.client,
-      status: unit.status,
+      client: typeof unit.client === 'object' ? unit.client._id : unit.client, // Asegúrate de que sea un ID
     });
   };
 
   const handleUpdateUnit = async () => {
     if (!editingUnit) return;
 
+    // Validar que todos los campos requeridos estén presentes
+    if (!newUnit.model || !newUnit.type || !newUnit.brand || !newUnit.color || !newUnit.plates || !newUnit.client) {
+      alert('Por favor, completa todos los campos requeridos.');
+      return;
+    }
+
     try {
       const response = await axios.put(`http://localhost:5000/api/units/${editingUnit._id}`, newUnit);
       setUnits(units.map((unit) => (unit._id === editingUnit._id ? response.data : unit)));
       setEditingUnit(null);
-      setNewUnit({ model: '', type: '', brand: '', color: '', plates: '', client: '', status: '' });
+      setNewUnit({ model: '', type: '', brand: '', color: '', plates: '', client: '' });
     } catch (error) {
       console.error('Error updating unit:', error);
+      alert('Error al actualizar la unidad. Por favor, verifica los datos e intenta nuevamente.');
     }
   };
 
@@ -145,13 +150,6 @@ const Units: React.FC = () => {
             </option>
           ))}
         </select>
-        <input
-          type="text"
-          placeholder="Estatus"
-          value={newUnit.status}
-          onChange={(e) => setNewUnit({ ...newUnit, status: e.target.value })}
-          className="border p-2 rounded-md"
-        />
         {editingUnit ? (
           <button onClick={handleUpdateUnit} className="bg-blue-500 text-white px-4 py-2 rounded-md">Actualizar Unidad</button>
         ) : (
@@ -176,7 +174,6 @@ const Units: React.FC = () => {
                 <span className="block text-lg font-semibold text-gray-800">{unit.model} - {unit.type} - {unit.brand}</span>
                 <span className="block text-gray-600">{unit.color} - {unit.plates}</span>
                 <span className="block text-gray-600">Cliente: {typeof clientName === 'string' ? clientName : ''}</span>
-                <span className="block text-gray-600">Estatus: {unit.status}</span>
               </div>
               <div className="flex space-x-2">
                 <button onClick={() => handleEditUnit(unit)} className="bg-yellow-500 text-white px-4 py-2 rounded-md">Editar</button>
