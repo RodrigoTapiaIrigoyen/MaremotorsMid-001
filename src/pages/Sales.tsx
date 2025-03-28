@@ -166,13 +166,10 @@ const Sales: React.FC = () => {
         client: selectedClient,
         products: saleProducts,
         total,
+        status: 'pendiente', // Estado predeterminado
       };
 
-      console.log("Datos de la nueva venta:", newSale);
-
       const response = await axios.post("http://localhost:5000/api/sales", newSale);
-      console.log("Respuesta del servidor:", response.data);
-
       alert("Venta realizada con éxito");
       setSelectedClient("");
       setSelectedProducts([]);
@@ -207,13 +204,10 @@ const Sales: React.FC = () => {
         client: selectedClient,
         products: saleProducts,
         total,
+        status: editingSale.status, // Incluir el estado seleccionado
       };
 
-      console.log("Datos de la venta actualizada:", updatedSale);
-
       const response = await axios.put(`http://localhost:5000/api/sales/${editingSale._id}`, updatedSale);
-      console.log("Respuesta del servidor:", response.data);
-
       alert("Venta actualizada con éxito");
       setEditingSale(null);
       setSelectedClient("");
@@ -249,6 +243,17 @@ const Sales: React.FC = () => {
     } catch (error) {
       console.error("Error al aprobar la venta:", error);
       setError(`Error al aprobar la venta: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  const handleArchiveSale = async (saleId: string) => {
+    try {
+      await axios.put(`http://localhost:5000/api/sales/${saleId}`, { status: 'archivada' });
+      setSales(sales.filter((sale) => sale._id !== saleId)); // Eliminar la venta archivada de la lista principal
+      alert('Venta archivada con éxito');
+    } catch (error) {
+      console.error('Error al archivar la venta:', error);
+      setError(`Error al archivar la venta: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -484,6 +489,25 @@ const Sales: React.FC = () => {
           )}
         </div>
 
+        <div className="mb-6">
+          <label className="flex items-center text-gray-700 text-sm font-semibold mb-2">
+            Estado de la Venta
+          </label>
+          <select
+            value={editingSale?.status || 'pendiente'}
+            onChange={(e) => {
+              if (editingSale) {
+                setEditingSale({ ...editingSale, status: e.target.value });
+              }
+            }}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="pendiente">Pendiente</option>
+            <option value="aprobada">Aprobada</option>
+            <option value="archivada">Archivada</option>
+          </select>
+        </div>
+
         <div className="border-t border-gray-200 pt-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-semibold text-gray-800 flex items-center">
@@ -538,39 +562,46 @@ const Sales: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {sales
-              .filter(sale => sale.client.name.toLowerCase().includes(salesSearchTerm.toLowerCase()))
-              .map(sale => (
+              .filter((sale) => sale.status !== 'archivada') // Excluir ventas archivadas
+              .filter((sale) => sale.client.name.toLowerCase().includes(salesSearchTerm.toLowerCase()))
+              .map((sale) => (
                 <div key={sale._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold text-gray-800">{sale.client.name}</h3>
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      sale.status === 'aprobada' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {sale.status}
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm ${
+                        sale.status === 'aprobada'
+                          ? 'bg-green-100 text-green-800'
+                          : sale.status === 'pendiente'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-gray-100 text-gray-800' // Estilo para 'archivada'
+                      }`}
+                    >
+                      {sale.status.charAt(0).toUpperCase() + sale.status.slice(1)} {/* Capitalizar el estado */}
                     </span>
                   </div>
                   <p className="text-gray-600 mb-4">Total: MXN {sale.total?.toFixed(2) || '0.00'}</p>
                   <div className="flex gap-2">
-                    <button 
+                    <button
                       onClick={() => handleApproveSale(sale._id)}
                       className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                     >
                       <Check size={16} className="mr-1" />
                       Aprobar
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleEditSale(sale)}
                       className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                     >
                       <Edit2 size={16} className="mr-1" />
                       Editar
                     </button>
-                    <button 
-                      onClick={() => handleDeleteSale(sale._id)}
-                      className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                    <button
+                      onClick={() => handleArchiveSale(sale._id)} // Botón para archivar
+                      className="flex items-center px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
                     >
                       <Trash2 size={16} className="mr-1" />
-                      Eliminar
+                      Archivar
                     </button>
                   </div>
                 </div>

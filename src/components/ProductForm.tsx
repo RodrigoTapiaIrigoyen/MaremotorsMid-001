@@ -1,8 +1,37 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
-  const [product, setProduct] = useState({
+interface Currency {
+  _id: string;
+  name: string;
+  symbol: string;
+  exchangeRate: number;
+}
+
+interface Product {
+  _id?: string;
+  name: string;
+  partNumber: string;
+  price: number;
+  stock: number;
+  minStock: number;
+  section: string;
+  subsection: string;
+  purchasePrice: number;
+  condition: string;
+  currencyId: string;
+  exchangeRate: number;
+  manufacturer?: string;
+}
+
+interface ProductFormProps {
+  onProductCreated: () => void;
+  productToEdit: Product | null;
+  currencies: Currency[];
+}
+
+const ProductForm = ({ onProductCreated, productToEdit, currencies }: ProductFormProps) => {
+  const [product, setProduct] = useState<Product>({
     name: "",
     partNumber: "",
     price: 0,
@@ -12,24 +41,68 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
     subsection: "",
     purchasePrice: 0,
     condition: "new",
-    currencyId: "", // Cambia 'currency' a 'currencyId'
-    exchangeRate: 1, // Añadir tasa de cambio
+    currencyId: "",
+    exchangeRate: 1,
+    manufacturer: "",
   });
 
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (productToEdit) {
-      setProduct(productToEdit);
-    }
-  }, [productToEdit]);
+    if (productToEdit && currencies.length > 0) {
+      // Buscar la moneda correspondiente al producto que se está editando
+      const currency = currencies.find((c) => c._id === productToEdit.currencyId);
 
-  const handleChange = (e) => {
+      setProduct({
+        ...productToEdit,
+        section: productToEdit.section || "", // Asegúrate de cargar la sección previa
+        currencyId: productToEdit.currencyId || "", // Asegúrate de cargar la moneda previa
+        exchangeRate: currency ? currency.exchangeRate : productToEdit.exchangeRate, // Sincronizar tasa de cambio
+      });
+    } else {
+      // Reiniciar el formulario si no hay producto para editar
+      setProduct({
+        name: "",
+        partNumber: "",
+        price: 0,
+        stock: 0,
+        minStock: 0,
+        section: "",
+        subsection: "",
+        purchasePrice: 0,
+        condition: "new",
+        currencyId: "",
+        exchangeRate: 1,
+        manufacturer: "",
+      });
+    }
+  }, [productToEdit, currencies]);
+
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const currencyId = e.target.value;
+    const selectedCurrency = currencies.find((c) => c._id === currencyId);
+
+    if (selectedCurrency) {
+      setProduct({
+        ...product,
+        currencyId: currencyId,
+        exchangeRate: selectedCurrency.exchangeRate
+      });
+    } else {
+      setProduct({
+        ...product,
+        currencyId: "",
+        exchangeRate: 1
+      });
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setProduct({ ...product, [name]: value });
   };
 
-  const validateProduct = (product) => {
+  const validateProduct = (product: Product): string | null => {
     if (!product.name) {
       return "El nombre del producto es obligatorio.";
     }
@@ -48,7 +121,7 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
     if (!product.section) {
       return "La sección es obligatoria.";
     }
-    if (!product.currencyId) { // Cambia 'currency' a 'currencyId'
+    if (!product.currencyId) {
       return "La moneda es obligatoria.";
     }
     if (!product.exchangeRate || product.exchangeRate <= 0) {
@@ -57,7 +130,7 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
     return null;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -84,8 +157,9 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
         subsection: "",
         purchasePrice: 0,
         condition: "new",
-        currencyId: "", // Cambia 'currency' a 'currencyId'
-        exchangeRate: 1, // Añadir tasa de cambio
+        currencyId: "",
+        exchangeRate: 1,
+        manufacturer: "",
       });
     } catch (error) {
       console.error("Error saving product:", error);
@@ -103,7 +177,7 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
           name="name"
           value={product.name}
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
         />
       </div>
       <div className="mb-2">
@@ -113,17 +187,17 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
           name="partNumber"
           value={product.partNumber}
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
         />
       </div>
       <div className="mb-2">
-        <label className="block text-sm font-medium">Precio</label>
+        <label className="block text-sm font-medium">Precio De Venta</label>
         <input
           type="number"
           name="price"
           value={product.price}
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
         />
       </div>
       <div className="mb-2">
@@ -133,7 +207,7 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
           name="stock"
           value={product.stock}
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
         />
       </div>
       <div className="mb-2">
@@ -143,32 +217,32 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
           name="minStock"
           value={product.minStock}
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
         />
       </div>
       <div className="mb-2">
         <label className="block text-sm font-medium">Sección</label>
         <select
           name="section"
-          value={product.section}
+          value={product.section} // Asegúrate de que este valor provenga del estado
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
         >
           <option value="">Seleccionar Sección</option>
-          <option value="A">MOTOR</option>
-          <option value="B">ELECTRICO</option>
-          <option value="C">COMPONENTES DE ESCAPE</option>
-          <option value="D">CABLES</option>
-          <option value="E">TURBINA</option>
-          <option value="F">GASOLINA</option>
-          <option value="G">REMOLQUE</option>
-          <option value="H">ACCESORIOS</option>
-          <option value="I">CONDUCION</option>
-          <option value="J">INTERCOOLER</option>
-          <option value="K">CASCO</option>
-          <option value="L">ACEITE</option>
-          <option value="M">FILTROS</option>
-          <option value="N">BUJIAS</option>
+          <option value="Motores">Motores</option>
+          <option value="Eléctrico">Eléctrico</option>
+          <option value="Componentes de Escape">Componentes de Escape</option>
+          <option value="Cables">Cables</option>
+          <option value="Turbina">Turbina</option>
+          <option value="Gasolina">Gasolina</option>
+          <option value="Remolque">Remolque</option>
+          <option value="Accesorios">Accesorios</option>
+          <option value="Conducción">Conducción</option>
+          <option value="Intercooler">Intercooler</option>
+          <option value="Casco">Casco</option>
+          <option value="Aceite">Aceite</option>
+          <option value="Filtros">Filtros</option>
+          <option value="Bujías">Bujías</option>
         </select>
       </div>
       <div className="mb-2">
@@ -178,7 +252,7 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
           name="subsection"
           value={product.subsection}
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
         />
       </div>
       <div className="mb-2">
@@ -188,7 +262,7 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
           name="purchasePrice"
           value={product.purchasePrice}
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
         />
       </div>
       <div className="mb-2">
@@ -197,7 +271,7 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
           name="condition"
           value={product.condition}
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
         >
           <option value="new">Nuevo</option>
           <option value="used">Usado</option>
@@ -207,10 +281,10 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
       <div className="mb-2">
         <label className="block text-sm font-medium">Moneda</label>
         <select
-          name="currencyId" // Cambia 'currency' a 'currencyId'
-          value={product.currencyId} // Cambia 'currency' a 'currencyId'
-          onChange={handleChange}
-          className="border p-2 w-full"
+          name="currencyId"
+          value={product.currencyId} // Asegúrate de que este valor provenga del estado
+          onChange={handleCurrencyChange}
+          className="border p-2 w-full rounded"
         >
           <option value="">Seleccionar Moneda</option>
           {currencies.map((currency) => (
@@ -221,16 +295,23 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }) => {
         </select>
       </div>
       <div className="mb-2">
-        <label className="block text-sm font-medium">Tasa de Cambio</label>
+        <label className="block text-sm font-medium">Fabricante</label>
         <input
-          type="number"
-          name="exchangeRate"
-          value={product.exchangeRate}
+          type="text"
+          name="manufacturer"
+          value={product.manufacturer}
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
         />
       </div>
-      <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+      <input
+        type="number"
+        name="exchangeRate"
+        value={product.exchangeRate}
+        readOnly
+        hidden // Ocultar el campo de tasa de cambio
+      />
+      <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
         Guardar Producto
       </button>
     </form>

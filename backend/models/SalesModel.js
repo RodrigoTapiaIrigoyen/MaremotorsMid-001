@@ -24,7 +24,7 @@ const saleSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pendiente', 'aprobada', 'cancelada'],
+    enum: ['pendiente', 'aprobada', 'archivada'],
     default: 'pendiente',
   },
   client: {

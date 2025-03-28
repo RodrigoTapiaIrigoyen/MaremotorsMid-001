@@ -21,6 +21,7 @@ import Units from './pages/catalog/Units';
 import Currencies from './pages/catalog/Currencies';
 import Categories from './pages/catalog/Categories';
 import Status from './pages/catalog/Status';
+import InventorySettings from './pages/catalog/InventorySettings'; // Importar InventorySettings
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
             <Route path="catalog/currencies" element={<Currencies />} />
             <Route path="catalog/categories" element={<Categories />} />
             <Route path="catalog/status" element={<Status />} />
+            <Route path="catalog/inventory-settings" element={<InventorySettings />} /> {/* Nueva ruta */}
             <Route path="clients" element={<Clients />} />
             <Route path="mechanics" element={<Mechanics />} />
             <Route path="reports" element={<Reports />} />

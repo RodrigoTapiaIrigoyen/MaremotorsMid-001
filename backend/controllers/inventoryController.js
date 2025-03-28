@@ -6,6 +6,8 @@ export const getInventory = async (req, res) => {
     const products = await Product.find();
     const inventory = products.reduce((acc, product) => {
       const { section, subsection } = product;
+
+      // Usa directamente el nombre de la sección
       if (!acc[section]) {
         acc[section] = {};
       }
@@ -39,6 +41,8 @@ export const createInventory = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
+
+    // Usa directamente el nombre de la sección
     product.section = section;
     product.subsection = subsection;
     await product.save();
@@ -58,6 +62,8 @@ export const updateInventory = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
+
+    // Usa directamente el nombre de la sección
     product.section = section;
     product.subsection = subsection;
     await product.save();

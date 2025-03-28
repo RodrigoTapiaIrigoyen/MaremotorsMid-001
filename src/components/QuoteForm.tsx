@@ -3,20 +3,24 @@ import axios from 'axios';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Plus, Trash2, FileText, Download, ClipboardCheck, ChevronRight, Package2, Wrench, DollarSign } from 'lucide-react';
+import { useLocation } from 'react-router-dom'; // Importar useLocation
 
 const INITIAL_ITEM = { productId: '', serviceId: '', quantity: 1, type: 'product', discount: 0, currency: 'USD' };
 
 const QuoteForm = ({ onSubmit, initialQuote }) => {
+  const location = useLocation();
+  const { state } = location; // Recibir los datos enviados desde Reception.tsx
+
   const [formData, setFormData] = useState({
-    reception: '',
-    date: '',
-    client: '',
-    user: '',
+    reception: state?.recepcion || '',
+    date: state?.fecha || '',
+    client: state?.cliente || '',
+    user: state?.usuario || '', // Prellenar con el usuario recibido
     mechanic: '',
     documentType: 'fiscal',
     status: 'pending',
     discount: 0,
-    items: [INITIAL_ITEM],
+    items: [{ productId: '', serviceId: '', quantity: 1, type: 'product', discount: 0, currency: 'USD' }],
   });
 
   const [resources, setResources] = useState({ products: [], services: [], clients: [], mechanics: [] });
@@ -42,18 +46,43 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
   }, []);
 
   useEffect(() => {
-    if (initialQuote) {
+    if (initialQuote && resources.products.length > 0 && resources.services.length > 0) {
+      const mappedItems = initialQuote.items.map(item => {
+        // Determine if it's a product or service based on the presence of productId or serviceId
+        const type = item.productId ? 'product' : 'service';
+        const id = type === 'product' ? item.productId._id : item.serviceId._id;
+        
+        return {
+          type,
+          productId: type === 'product' ? id : '',
+          serviceId: type === 'service' ? id : '',
+          quantity: item.quantity,
+          discount: item.discount || 0,
+          currency: item.currency || 'USD'
+        };
+      });
+
       setFormData({
         ...initialQuote,
-        items: initialQuote.items.map(item => ({
-          ...item,
-          productId: item.productId?._id || '',
-          serviceId: item.serviceId?._id || '',
-          currency: item.currency || 'USD'
-        }))
+        items: mappedItems,
+        status: initialQuote.status || 'pending',
+        discount: initialQuote.discount || 0
       });
     }
-  }, [initialQuote]);
+  }, [initialQuote, resources.products, resources.services]);
+
+  useEffect(() => {
+    if (state) {
+      setFormData((prev) => ({
+        ...prev,
+        reception: state.recepcion || '',
+        date: state.fecha || '',
+        client: resources.clients.find(c => c.name === state.cliente)?._id || '',
+        user: state.usuario || '', // Asignar el usuario recibido desde Reception
+        mechanic: resources.mechanics.find(m => m.name === state.mecanico)?._id || '',
+      }));
+    }
+  }, [state, resources.clients, resources.mechanics]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -317,13 +346,42 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
             <div className="space-y-6">
               <Input label="Recepción" name="reception" value={formData.reception} onChange={handleChange} />
               <Input label="Fecha" type="date" name="date" value={formData.date} onChange={handleChange} />
-              <Select label="Cliente" name="client" value={formData.client || ''} onChange={handleChange} options={resources.clients} />
-              <Input label="Usuario" name="user" value={formData.user} onChange={handleChange} />
+              <SelectWithSearch
+                label="Cliente"
+                name="client"
+                value={formData.client || ''} // El valor debe ser el ID del cliente
+                onChange={handleChange}
+                options={resources.clients} // Lista de clientes
+              />
+              <Input
+                label="Usuario"
+                name="user"
+                value={formData.user} // Mostrar el usuario recibido o permitir que se escriba manualmente
+                onChange={handleChange}
+              />
             </div>
             <div className="space-y-6">
-              <Select label="Mecánico" name="mechanic" value={formData.mechanic || ''} onChange={handleChange} options={resources.mechanics} />
+              <Select
+                label="Mecánico"
+                name="mechanic"
+                value={formData.mechanic || ''} // El valor debe ser el ID del mecánico
+                onChange={handleChange}
+                options={resources.mechanics} // Lista de mecánicos
+              />
               <Select label="Tipo de Documento" name="documentType" value={formData.documentType} onChange={handleChange} options={[{ _id: 'fiscal', name: 'Fiscal' }, { _id: 'no fiscal', name: 'No Fiscal' }]} />
-              <Select label="Estado" name="status" value={formData.status} onChange={handleChange} options={[{ _id: 'pending', name: 'Pendiente' }, { _id: 'approved', name: 'Aprobado' }]} />
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700">Estado</label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
+                  className="border p-2 w-full rounded"
+                >
+                  <option value="pending">Pendiente</option>
+                  <option value="approved">Aprobado</option>
+                  <option value="archived">Archivado</option> {/* Cambiar a 'archived' */}
+                </select>
+              </div>
               <Input label="Descuento (%)" type="number" name="discount" value={formData.discount} onChange={handleChange} />
             </div>
           </div>
@@ -337,14 +395,6 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-800">Artículos</h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, items: [...prev.items, INITIAL_ITEM] }))}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Agregar Artículo</span>
-              </button>
             </div>
 
             <div className="space-y-6">
@@ -368,7 +418,7 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
                       </div>
                       <div className="col-span-1 md:col-span-2 lg:col-span-1">
                         {item.type === 'product' ? (
-                          <Select
+                          <SelectWithSearch
                             label="Producto"
                             value={item.productId || ''}
                             onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
@@ -376,7 +426,7 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
                             icon={Package2}
                           />
                         ) : (
-                          <Select
+                          <SelectWithSearch
                             label="Servicio"
                             value={item.serviceId || ''}
                             onChange={(e) => handleItemChange(index, 'serviceId', e.target.value)}
@@ -433,6 +483,18 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
                   </div>
                 );
               })}
+
+              {/* Botón de agregar artículo fijo */}
+              <div className="sticky bottom-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, items: [...prev.items, INITIAL_ITEM] }))}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Agregar Artículo</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -559,5 +621,47 @@ const Select = ({ label, options, icon: Icon, ...props }) => (
     </div>
   </div>
 );
+
+const SelectWithSearch = ({ label, options, icon: Icon, value, onChange, ...props }) => {
+  const [searchText, setSearchText] = useState(''); // Estado para el texto de búsqueda
+  const filteredOptions = options.filter(option =>
+    option.name.toLowerCase().includes(searchText.toLowerCase())
+  ); // Filtrar las opciones según el texto de búsqueda
+
+  return (
+    <div className="flex flex-col">
+      <label className="text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <div className="relative">
+        {Icon && (
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            <Icon className="h-5 w-5" />
+          </div>
+        )}
+        <div className={`relative ${Icon ? 'pl-10' : ''}`}>
+          <input
+            type="text"
+            placeholder={`Buscar ${label}...`}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-t-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          />
+          <select
+            value={value}
+            onChange={onChange}
+            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-b-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            {...props}
+          >
+            <option value="">Seleccionar {label}</option>
+            {filteredOptions.map((option) => (
+              <option key={option._id} value={option._id}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default QuoteForm;

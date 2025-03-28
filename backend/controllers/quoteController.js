@@ -111,3 +111,15 @@ export const deleteQuote = async (req, res) => {
     res.status(500).json({ message: 'Error al eliminar la cotización', error: err });
   }
 };
+// Obtener cotizaciones archivadas
+export const getArchivedQuotes = async (req, res) => {
+  try {
+    const archivedQuotes = await Quote.find({ status: 'archived' })
+      .populate('items.productId')
+      .populate('items.serviceId');
+    res.json(archivedQuotes);
+  } catch (error) {
+    console.error('Error al obtener cotizaciones archivadas:', error);
+    res.status(500).json({ message: 'Error al obtener cotizaciones archivadas' });
+  }
+};

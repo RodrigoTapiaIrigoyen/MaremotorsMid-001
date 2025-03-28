@@ -22,6 +22,7 @@ const Units: React.FC = () => {
   const [newUnit, setNewUnit] = useState({ model: '', type: '', brand: '', color: '', plates: '', client: '' });
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [types, setTypes] = useState<string[]>([]); // Estado para los tipos
 
   useEffect(() => {
     const fetchUnitsAndClients = async () => {
@@ -36,6 +37,19 @@ const Units: React.FC = () => {
     };
 
     fetchUnitsAndClients();
+  }, []);
+
+  useEffect(() => {
+    const fetchTypes = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/catalog/types');
+        setTypes(response.data); // Supongamos que la API devuelve un array de objetos con { _id, name }
+      } catch (error) {
+        console.error('Error al cargar los tipos:', error);
+      }
+    };
+
+    fetchTypes();
   }, []);
 
   const handleAddUnit = async () => {
@@ -110,13 +124,18 @@ const Units: React.FC = () => {
           onChange={(e) => setNewUnit({ ...newUnit, model: e.target.value })}
           className="border p-2 rounded-md"
         />
-        <input
-          type="text"
-          placeholder="Tipo"
+        <select
           value={newUnit.type}
           onChange={(e) => setNewUnit({ ...newUnit, type: e.target.value })}
           className="border p-2 rounded-md"
-        />
+        >
+          <option value="">Seleccionar Tipo</option>
+          {types.map((type: any) => (
+            <option key={type._id} value={type.name}>
+              {type.name}
+            </option>
+          ))}
+        </select>
         <input
           type="text"
           placeholder="Marca"
@@ -167,17 +186,27 @@ const Units: React.FC = () => {
       </div>
       <ul className="mt-4 space-y-4">
         {filteredUnits.map((unit) => {
-          const clientName = clients.find(client => client._id === unit.client)?.name || unit.client;
+          const clientName = typeof unit.client === 'object' ? unit.client.name : clients.find(client => client._id === unit.client)?.name || 'Cliente no encontrado';
           return (
             <li key={unit._id} className="bg-white p-4 rounded-lg shadow flex justify-between items-center">
               <div>
-                <span className="block text-lg font-semibold text-gray-800">{unit.model} - {unit.type} - {unit.brand}</span>
-                <span className="block text-gray-600">{unit.color} - {unit.plates}</span>
-                <span className="block text-gray-600">Cliente: {typeof clientName === 'string' ? clientName : ''}</span>
+                <span className="block text-lg font-semibold text-gray-800">
+                  {unit.model} - {unit.type} - {unit.brand}
+                </span>
+                <span className="block text-gray-600">
+                  {unit.color} - {unit.plates}
+                </span>
+                <span className="block text-gray-600">
+                  Cliente: {clientName}
+                </span>
               </div>
               <div className="flex space-x-2">
-                <button onClick={() => handleEditUnit(unit)} className="bg-yellow-500 text-white px-4 py-2 rounded-md">Editar</button>
-                <button onClick={() => handleDeleteUnit(unit._id)} className="bg-red-500 text-white px-4 py-2 rounded-md">Eliminar</button>
+                <button onClick={() => handleEditUnit(unit)} className="bg-yellow-500 text-white px-4 py-2 rounded-md">
+                  Editar
+                </button>
+                <button onClick={() => handleDeleteUnit(unit._id)} className="bg-red-500 text-white px-4 py-2 rounded-md">
+                  Eliminar
+                </button>
               </div>
             </li>
           );

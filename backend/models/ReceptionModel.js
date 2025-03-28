@@ -8,7 +8,7 @@ const receptionSchema = new mongoose.Schema({
   model: { type: String, required: true },
   type: { type: String, required: true },
   brand: { type: String, required: true },
-  quotation: { type: Number, required: true },
+
   color: { type: String, required: true },
   plates: { type: String, required: true },
   accessories: {
@@ -39,15 +39,11 @@ const receptionSchema = new mongoose.Schema({
   issues: { type: String, required: true },
   observations: { type: String, required: true },
   trailer: {
-    remolque: { type: Boolean, default: false },
-    cambiar: { type: Boolean, default: false },
     winch: { type: Boolean, default: false },
     pata: { type: Boolean, default: false },
     baleros: { type: Boolean, default: false },
-    tablas: { type: Boolean, default: false },
     luces: { type: Boolean, default: false },
     gomas: { type: Boolean, default: false },
-    bases: { type: Boolean, default: false },
     us: { type: Boolean, default: false },
     tornilleria: { type: Boolean, default: false },
   },

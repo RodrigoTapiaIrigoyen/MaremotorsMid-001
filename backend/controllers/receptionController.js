@@ -27,7 +27,9 @@ export const updateReception = async (req, res) => {
 
 export const getReceptions = async (req, res) => {
   try {
-    const receptions = await Reception.find().populate('client').populate('model');
+    const receptions = await Reception.find()
+      .populate('client') // Poblamos el cliente
+      .populate('model'); // Poblamos el modelo
     res.status(200).json(receptions);
   } catch (error) {
     res.status(400).json({ message: error.message });

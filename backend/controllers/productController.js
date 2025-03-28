@@ -1,6 +1,12 @@
 import Product from '../models/productModel.js';
 import Movement from '../models/MovementModel.js';
 
+const sectionMap = {
+  A: "Motores",
+  B: "Eléctrico",
+  C: "Componentes de Escape",
+};
+
 // Obtener todos los productos
 export const getProducts = async (req, res) => {
   try {
@@ -36,9 +42,13 @@ export const createProduct = async (req, res) => {
       subsection,
       purchasePrice,
       condition,
+      exchangeRate,
       currencyId,
-      exchangeRate
+      manufacturer,
     } = req.body;
+
+    // Mapea el código de la sección al nombre completo
+    const sectionName = sectionMap[section] || section;
 
     const newProduct = new Product({
       name,
@@ -46,18 +56,19 @@ export const createProduct = async (req, res) => {
       price,
       stock,
       minStock,
-      section,
+      section: sectionName, // Guarda el nombre completo de la sección
       subsection,
       purchasePrice,
       condition,
+      exchangeRate,
       currencyId,
-      exchangeRate
+      manufacturer,
     });
 
-    await newProduct.save();
-    res.status(201).json(newProduct);
+    const savedProduct = await newProduct.save();
+    res.status(201).json(savedProduct);
   } catch (error) {
-    res.status(500).json({ message: 'Error al crear el producto', error });
+    res.status(400).json({ message: error.message });
   }
 };
 
@@ -74,10 +85,14 @@ export const updateProduct = async (req, res) => {
     purchasePrice,
     condition,
     currencyId,
-    exchangeRate
+    exchangeRate,
+    manufacturer,
   } = req.body;
 
   try {
+    // Mapea el código de la sección al nombre completo
+    const sectionName = sectionMap[section] || section;
+
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       {
@@ -86,18 +101,19 @@ export const updateProduct = async (req, res) => {
         price,
         stock,
         minStock,
-        section,
+        section: sectionName, // Guarda el nombre completo de la sección
         subsection,
         purchasePrice,
         condition,
         currencyId,
-        exchangeRate // Añadir tasa de cambio
+        exchangeRate,
+        manufacturer,
       },
       { new: true }
     );
     res.status(200).json(updatedProduct);
   } catch (error) {
-    res.status(500).json({ message: 'Error al actualizar el producto', error });
+    res.status(500).json({ message: "Error al actualizar el producto", error });
   }
 };
 

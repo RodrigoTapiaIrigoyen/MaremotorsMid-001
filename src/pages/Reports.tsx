@@ -5,7 +5,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 // Define status types for better type safety
-type StatusType = 'aprobada' | 'pendiente';
+type StatusType = 'archivada' | 'archived';
 type StatusFilterType = 'all' | StatusType;
 
 interface Product {
@@ -35,10 +35,8 @@ interface Report {
 }
 
 const statusMap: { [key: string]: string } = {
-  'aprobada': 'approved',
-  'pendiente': 'pending',
-  'approved': 'aprobada',
-  'pending': 'pendiente'
+  'archivada': 'archived',
+  'archived': 'archivada'
 };
 
 const Reports: React.FC = () => {
@@ -53,7 +51,7 @@ const Reports: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [includeIVA, setIncludeIVA] = useState<boolean>(false);
-  const [statusFilter, setStatusFilter] = useState<StatusFilterType>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilterType>('archivada');
   const [selectedMonth, setSelectedMonth] = useState<string>(
     new Date().toISOString().slice(0, 7)
   );
@@ -370,14 +368,11 @@ const Reports: React.FC = () => {
       // Get the report status, defaulting to empty string if undefined
       const reportStatus = (report.status || '').toLowerCase().trim();
   
-      // Map the status filter to the corresponding value in the other language
-      const mappedStatusFilter = statusMap[statusFilter.toLowerCase()] || statusFilter.toLowerCase();
+      // Check if the status matches either 'archivada' or 'archived'
+      const isArchived = reportStatus === 'archivada' || reportStatus === 'archived';
   
-      // Debug log to check status values
-      console.log(`Report ID: ${report._id}, Status: ${reportStatus}, Filter: ${mappedStatusFilter}`);
-  
-      // Return true if both search and status match
-      return searchMatch && (reportStatus === statusFilter.toLowerCase() || reportStatus === mappedStatusFilter);
+      // Return true if both search matches and status is archived (when filtered)
+      return searchMatch && (statusFilter === 'all' || (statusFilter === 'archivada' && isArchived));
     });
   };
 
@@ -415,7 +410,9 @@ const Reports: React.FC = () => {
           </p>
           {type !== 'receptions' && report.status && (
             <p className={`text-sm font-medium ${
-              report.status.toLowerCase().trim() === 'aprobada' ? 'text-green-600' : 'text-yellow-600'
+              report.status.toLowerCase().trim() === 'archivada' || report.status.toLowerCase().trim() === 'archived'
+                ? 'text-green-600'
+                : 'text-yellow-600'
             }`}>
               Estado: {report.status}
             </p>
@@ -510,8 +507,7 @@ const Reports: React.FC = () => {
         className="px-4 py-2 border rounded-lg bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
       >
         <option value="all">Todos</option>
-        <option value="aprobada">Aprobados</option>
-        <option value="pendiente">Pendientes</option>
+        <option value="archivada">Archivada</option>
       </select>
     </div>
   );

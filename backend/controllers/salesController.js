@@ -16,6 +16,10 @@ export const getSales = async (req, res) => {
 export const createSale = async (req, res) => {
   try {
     const { products, total, date, status, client } = req.body;
+    // Validar el estado
+    if (!['pendiente', 'aprobada', 'archivada'].includes(status)) {
+      return res.status(400).json({ message: 'Estado inválido para la venta' });
+    }
 
     // Validar el cliente
     const clientExists = await Client.findById(client);
@@ -57,11 +61,21 @@ export const updateSale = async (req, res) => {
   const { products, total, date, status, client } = req.body;
 
   try {
+    // Validar el estado
+    if (!['pendiente', 'aprobada', 'archivada'].includes(status)) {
+      return res.status(400).json({ message: 'Estado inválido para la venta' });
+    }
+
     const updatedSale = await Sale.findByIdAndUpdate(
       id,
       { products, total, date, status, client },
       { new: true }
     );
+
+    if (!updatedSale) {
+      return res.status(404).json({ message: 'Venta no encontrada' });
+    }
+
     res.status(200).json(updatedSale);
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar la venta', error });
@@ -97,5 +111,17 @@ export const approveSale = async (req, res) => {
     res.status(200).json(sale);
   } catch (error) {
     res.status(500).json({ message: 'Error al aprobar la venta', error });
+  }
+};
+
+// Obtener ventas archivadas
+export const getArchivedSales = async (req, res) => {
+  try {
+    const archivedSales = await Sale.find({ status: 'archivada' })
+      .populate('products.product')
+      .populate('client');
+    res.status(200).json(archivedSales);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener las ventas archivadas', error });
   }
 };

@@ -17,7 +17,7 @@ const quoteSchema = new mongoose.Schema({
   user: { type: String, required: true },
   mechanic: { type: String, required: true },
   documentType: { type: String, required: true, enum: ['fiscal', 'no fiscal'] },
-  status: { type: String, required: true, enum: ['pending', 'approved'] },
+  status: { type: String, required: true, enum: ['pending', 'approved', 'archived'] },
   discount: { type: Number, required: true, default: 0 },
   items: [itemSchema],
   total: { type: Number, required: true, default: 0 },

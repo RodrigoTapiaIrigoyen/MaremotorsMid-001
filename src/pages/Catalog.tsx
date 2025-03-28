@@ -9,6 +9,7 @@ import {
   DollarSign,
   Tags,
   ClipboardList,
+  Settings,
 } from 'lucide-react';
 
 interface CategoryCard {
@@ -88,6 +89,14 @@ export default function Catalog() {
       color: 'pink',
       path: '/catalog/status'
     },
+    {
+      id: 'inventory-settings',
+      title: 'Creacion de categorias',
+      description: 'Gestión de categorías, tipos y secciones',
+      icon: Settings,
+      color: 'teal',
+      path: '/catalog/inventory-settings'
+    },
   ];
 
   const colorVariants = {
@@ -99,6 +108,7 @@ export default function Catalog() {
     yellow: 'bg-yellow-500 hover:bg-yellow-600 text-white',
     indigo: 'bg-indigo-500 hover:bg-indigo-600 text-white',
     pink: 'bg-pink-500 hover:bg-pink-600 text-white',
+    teal: 'bg-teal-500 hover:bg-teal-600 text-white',
   };
 
   return (

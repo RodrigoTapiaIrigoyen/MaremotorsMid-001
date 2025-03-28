@@ -48,6 +48,10 @@ const productSchema = new mongoose.Schema({
     ref: 'Currency',
     required: true, 
   },
+  manufacturer: {
+    type: String, // O usa mongoose.Schema.Types.ObjectId si es una referencia
+    required: true,
+  },
 });
 
 // Middleware para verificar el stock antes de guardar

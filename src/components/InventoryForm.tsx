@@ -12,14 +12,27 @@ const InventoryForm = ({ onInventoryUpdated, inventoryItemToEdit }) => {
   });
 
   const [products, setProducts] = useState([]);
+  const [dynamicSections, setDynamicSections] = useState([]); // Estado para las secciones dinámicas
 
   useEffect(() => {
     // Obtener todos los productos para el selector
-    axios.get("http://localhost:5000/api/products")
+    axios
+      .get("http://localhost:5000/api/products")
       .then((response) => {
         setProducts(response.data);
       })
       .catch((err) => console.error("Error al obtener los productos:", err));
+  }, []);
+
+  useEffect(() => {
+    // Obtener las secciones dinámicas desde el backend
+    axios
+      .get("http://localhost:5000/api/catalog/sections")
+      .then((response) => {
+        const sections = response.data.map((section) => section.name); // Extraer nombres de las secciones
+        setDynamicSections(sections); // Guardar las secciones dinámicas
+      })
+      .catch((err) => console.error("Error al obtener las secciones:", err));
   }, []);
 
   useEffect(() => {
@@ -69,20 +82,27 @@ const InventoryForm = ({ onInventoryUpdated, inventoryItemToEdit }) => {
         <label className="block text-gray-700">Sección</label>
         <select {...register("section", { required: true })} className="border p-2 w-full rounded">
           <option value="">Seleccionar Sección</option>
-          <option value="A">MOTOR</option>
-          <option value="B">ELECTRICO</option>
-          <option value="C">COMPONENTES DE ESCAPE</option>
-          <option value="D">CABLES</option>
-          <option value="E">TURBINA</option>
-          <option value="F">GASOLINA</option>
-          <option value="G">REMOLQUE</option>
-          <option value="H">ACCESORIOS</option>
-          <option value="I">CONDUCION</option>
-          <option value="J">INTERCOOLER</option>
-          <option value="K">CASCO</option>
-          <option value="L">ACEITE</option>
-          <option value="M">FILTROS</option>
-          <option value="N">BUJIAS</option>
+          {/* Opciones con nombres completos */}
+          <option value="Motores">Motores</option>
+          <option value="Eléctrico">Eléctrico</option>
+          <option value="Componentes de Escape">Componentes de Escape</option>
+          <option value="Cables">Cables</option>
+          <option value="Turbina">Turbina</option>
+          <option value="Gasolina">Gasolina</option>
+          <option value="Remolque">Remolque</option>
+          <option value="Accesorios">Accesorios</option>
+          <option value="Conducción">Conducción</option>
+          <option value="Intercooler">Intercooler</option>
+          <option value="Casco">Casco</option>
+          <option value="Aceite">Aceite</option>
+          <option value="Filtros">Filtros</option>
+          <option value="Bujías">Bujías</option>
+          {/* Opciones dinámicas */}
+          {dynamicSections.map((section, index) => (
+            <option key={`dynamic-${index}`} value={section}>
+              {section}
+            </option>
+          ))}
         </select>
       </div>
       <div>

@@ -3,6 +3,7 @@ import axios from 'axios';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { FileText, Printer, Trash2, Edit, Plus, ChevronRight, Car, PenTool as Tool, Package, ClipboardCheck, AlertTriangle, Settings, Truck, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const initialFormData = {
   reception: '',
@@ -12,7 +13,6 @@ const initialFormData = {
   model: '',
   type: '',
   brand: '',
-  quotation: '',
   color: '',
   plates: '',
   accessories: {
@@ -43,15 +43,11 @@ const initialFormData = {
   issues: '',
   observations: '',
   trailer: {
-    remolque: false,
-    cambiar: false,
     winch: false,
     pata: false,
     baleros: false,
-    tablas: false,
     luces: false,
     gomas: false,
-    bases: false,
     us: false,
     tornilleria: false,
   },
@@ -70,6 +66,8 @@ const ReceptionForm = () => {
   const [successMessage, setSuccessMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [types, setTypes] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -79,7 +77,8 @@ const ReceptionForm = () => {
           axios.get('http://localhost:5000/api/clients'),
           axios.get('http://localhost:5000/api/units'),
         ]);
-        
+
+        console.log('Recepciones cargadas:', receptionsResponse.data); // Verificar los datos
         setReceptions(receptionsResponse.data);
         setClients(clientsResponse.data);
         setUnits(unitsResponse.data);
@@ -90,6 +89,19 @@ const ReceptionForm = () => {
     };
 
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchTypes = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/catalog/types');
+        setTypes(response.data);
+      } catch (error) {
+        console.error('Error al cargar los tipos:', error);
+      }
+    };
+
+    fetchTypes();
   }, []);
 
   const handleChange = (e) => {
@@ -135,8 +147,10 @@ const ReceptionForm = () => {
   const handleEdit = (reception) => {
     const editData = {
       ...reception,
-      model: reception.model._id || reception.model
+      client: reception.client._id || reception.client, // Asegúrate de asignar solo el ID del cliente
+      model: reception.model._id || reception.model, // Asegúrate de asignar solo el ID del modelo
     };
+
     setFormData(editData);
     setEditingReception(reception);
     setActiveTab('reception');
@@ -175,108 +189,193 @@ const ReceptionForm = () => {
     );
   };
 
-  const handlePrintPDF = () => {
-    const doc = new jsPDF();
-  
-    const logo = new Image();
-    logo.src = 'src/logo/Maremotors.png';
-  
-    logo.onload = () => {
-      doc.addImage(logo, 'PNG', 10, 10, 20, 20);
-  
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Maremotors YAMAHA", 105, 10, { align: "center" });
-  
-      doc.setFontSize(10);
-      doc.text("Carretera Merida Progreso Kilómetro Merida 24", 105, 15, { align: "center" });
-      doc.text("San Ignacio, Yucatan", 105, 20, { align: "center" });
-      doc.text("Tel: 9992383587 / 9997389040", 105, 25, { align: "center" });
-      doc.text("Horario: Lunes a Viernes de 9AM - 5PM, Sábado de 9AM - 1:30PM", 105, 30, { align: "center" });
-  
-      doc.setFontSize(8);
-      doc.setTextColor(50, 50, 50);
-      doc.text("EXISTEN ACCESORIOS Y PARTES DE LOS VEHICULOS QUE PUEDEN TENER VICIOS OCULTOS,", 105, 35, { align: "center" });
-      doc.text("NO NOS HACEMOS REPONSABLES QUE ESTANDO EN RESGUARDO O EN EL TRANSCURSO", 105, 40, { align: "center" });
-      doc.text("QUE SE RECOJAN SE DAÑEN.", 105, 45, { align: "center" });
+ 
+const handlePrintPDF = () => {
+  const doc = new jsPDF();
 
-      const selectedUnit = units.find(unit => unit._id === formData.model);
-      const modelName = selectedUnit ? selectedUnit.model || selectedUnit.name : 'Desconocido';
-  
-      const receptionInfo = [
-        ["Recepción", formData.reception],
-        ["Fecha", formData.date],
-        ["Cliente", formData.client],
-        ["Teléfono", formData.phone],
-        ["Modelo", modelName],
-        ["Tipo", formData.type],
-        ["Marca", formData.brand],
-        ["Cotización", formData.quotation],
-        ["Color", formData.color],
-        ["Placas", formData.plates]
-      ];
-  
-      const issuesObservations = [
-        ["Fallos / Problema", formData.issues],
-        ["Observaciones", formData.observations],
-        ["Tanque de Gasolina", formData.fuelTank],
-        ["Kilómetros", formData.kilometers]
-      ];
-  
-      const accessories = Object.entries(formData.accessories).map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
-      const aesthetics = Object.entries(formData.aesthetics).map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
-      const trailer = Object.entries(formData.trailer).map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
-  
-      const fieldsLeft = [
-        ...receptionInfo,
-        ...issuesObservations,
-        ...accessories
-      ];
-  
-      const fieldsRight = [
-        ...aesthetics,
-        ...trailer
-      ];
-  
-      const tableOptions = {
-        theme: 'grid',
-        styles: { halign: 'left', textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.1, fontSize: 8 },
-        headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] },
-        columnStyles: {
-          0: { cellWidth: 45 },
-          1: { cellWidth: 50 }
-        },
-        startY: 50,
-        margin: { top: 50, bottom: 0, left: 10, right: 10 },
-        pageBreak: 'auto'
-      };
-  
-      doc.autoTable({
-        ...tableOptions,
-        body: fieldsLeft,
-        margin: { left: 10 }
-      });
-  
-      doc.autoTable({
-        ...tableOptions,
-        body: fieldsRight,
-        startY: 50,
-        margin: { left: 110 }
-      });
-  
-      const finalY = Math.max(doc.lastAutoTable.finalY, doc.lastAutoTable.finalY);
-  
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      doc.text("FIRMA DE CONFORMIDAD DE RECEPCION", 20, finalY + 70);
-      doc.text("FIRMA DE CONFORMIDAD DE ENTREGA", 120, finalY + 70);
-  
-      doc.save(`recepcion_${formData.client}.pdf`);
+  const logo = new Image();
+  logo.src = 'src/logo/Maremotors.png';
+
+  logo.onload = () => {
+    // Header section
+    doc.addImage(logo, 'PNG', 10, 5, 20, 20);
+    
+    // Título principal con color suavizado
+    doc.setFontSize(14);
+    doc.setTextColor(51, 51, 51);
+    doc.text("Maremotors YAMAHA", 105, 8, { align: "center" });
+    
+    // Información de contacto con color suavizado
+    doc.setFontSize(9);
+    doc.setTextColor(68, 68, 68);
+    doc.text("Carretera Merida Progreso Kilómetro Merida 24", 105, 12, { align: "center" });
+    doc.text("San Ignacio, Yucatan • Tel: 9992383587 / 9997389040", 105, 16, { align: "center" });
+    doc.text("Horario: Lunes a Viernes de 9AM - 5PM, Sábado de 9AM - 1:30PM", 105, 20, { align: "center" });
+
+    // Espacio adicional antes del aviso legal
+    doc.setFontSize(7);
+    doc.setTextColor(85, 85, 85);
+    doc.text("EXISTEN ACCESORIOS Y PARTES DE LOS VEHICULOS QUE PUEDEN TENER VICIOS OCULTOS, NO NOS HACEMOS", 105, 27, { align: "center" });
+    doc.text("REPONSABLES QUE ESTANDO EN RESGUARDO O EN EL TRANSCURSO QUE SE RECOJAN SE DAÑEN.", 105, 30, { align: "center" });
+
+    const selectedUnit = units.find(unit => unit._id === formData.model);
+    const modelName = selectedUnit ? selectedUnit.model || selectedUnit.name : 'Desconocido';
+
+    // Main information
+    const mainInfo = [
+      ["Recepción", formData.reception],
+      ["Fecha", formData.date],
+      ["Cliente", formData.client],
+      ["Teléfono", formData.phone],
+      ["Modelo", modelName],
+      ["Tipo", formData.type],
+      ["Marca", formData.brand],
+      ["Color", formData.color],
+      ["Placas", formData.plates],
+      ["Tanque de Gasolina", formData.fuelTank],
+      ["Kilómetros", formData.kilometers]
+    ];
+
+    const accessories = Object.entries(formData.accessories)
+      .map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
+    
+    const aesthetics = Object.entries(formData.aesthetics)
+      .map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
+    
+    const trailer = Object.entries(formData.trailer)
+      .map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
+
+    // Configuración de las tablas con colores suavizados
+    const tableConfig = {
+      theme: 'grid',
+      styles: { 
+        fontSize: 8,
+        cellPadding: 2,
+        lineColor: [128, 128, 128],
+        lineWidth: 0.1,
+        textColor: [68, 68, 68],
+        font: 'helvetica',
+        fontStyle: 'normal'
+      },
+      headStyles: {
+        fillColor: [80, 80, 80],
+        textColor: [255, 255, 255],
+        fontSize: 9,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      bodyStyles: {
+        fillColor: [255, 255, 255]
+      },
+      alternateRowStyles: {
+        fillColor: [248, 248, 248]
+      }
     };
+
+    // Espacio adicional antes de las tablas principales
+    const mainTableStartY = 35;
+
+    // First column: Main info
+    doc.autoTable({
+      ...tableConfig,
+      startY: mainTableStartY,
+      body: mainInfo,
+      columnStyles: {
+        0: { cellWidth: 30, fontStyle: 'bold' },
+        1: { cellWidth: 30 }
+      },
+      margin: { left: 10 }
+    });
+
+    // Second column: Accessories
+    doc.autoTable({
+      ...tableConfig,
+      startY: mainTableStartY,
+      body: accessories,
+      columnStyles: {
+        0: { cellWidth: 30, fontStyle: 'bold' },
+        1: { cellWidth: 15, halign: 'center' }
+      },
+      margin: { left: 75 }
+    });
+
+    // Third column: Aesthetics and Trailer
+    doc.autoTable({
+      ...tableConfig,
+      startY: mainTableStartY,
+      body: [...aesthetics, ...trailer],
+      columnStyles: {
+        0: { cellWidth: 30, fontStyle: 'bold' },
+        1: { cellWidth: 15, halign: 'center' }
+      },
+      margin: { left: 125 }
+    });
+
+    // New table for Fallos and Observaciones below the three columns
+    const issuesAndObservations = [
+      ["Fallos / Problema", formData.issues],
+      ["Observaciones", formData.observations]
+    ];
+
+    const maxY = Math.max(
+      doc.lastAutoTable.finalY,
+      doc.lastAutoTable.finalY,
+      doc.lastAutoTable.finalY
+    );
+
+    const spacingAfterColumns = 15;
+
+    // Issues and Observations table con estilo mejorado
+    doc.autoTable({
+      ...tableConfig,
+      startY: maxY + spacingAfterColumns,
+      body: issuesAndObservations,
+      columnStyles: {
+        0: { cellWidth: 30, fontStyle: 'bold' },
+        1: { cellWidth: 160 }
+      },
+      margin: { left: 10 },
+      styles: {
+        ...tableConfig.styles,
+        minCellHeight: 20,
+        fontSize: 9
+      }
+    });
+
+    // Signature section con colores suavizados
+    const finalY = doc.lastAutoTable.finalY + 20;
+    
+    doc.setFontSize(9);
+    doc.setTextColor(68, 68, 68);
+    
+    // Signature boxes con líneas más suaves
+    doc.setLineWidth(0.3);
+    doc.rect(20, finalY, 70, 20);
+    doc.rect(110, finalY, 70, 20);
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text("FIRMA DE CONFORMIDAD DE RECEPCION", 55, finalY + 25, { align: "center" });
+    doc.text("FIRMA DE CONFORMIDAD DE ENTREGA", 145, finalY + 25, { align: "center" });
+
+    doc.save(`recepcion_${formData.client}.pdf`);
   };
+};
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
+  };
+
+  const handleGoToQuotes = (reception) => {
+    const selectedData = {
+      recepcion: reception.reception,
+      cliente: reception.client?.name || 'Cliente no encontrado',
+      usuario: reception.user || '', // Enviar el usuario ingresado manualmente
+      mecanico: reception.mechanic?.name || 'Mecánico no asignado',
+      fecha: reception.date,
+    };
+  
+    navigate('/quotes', { state: selectedData });
   };
 
   const renderOptions = (data) => {
@@ -310,7 +409,6 @@ const ReceptionForm = () => {
           </div>
         </div>
 
-        {/* Messages */}
         {successMessage && (
           <div className="mb-8 transform hover-scale">
             <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
@@ -410,11 +508,16 @@ const ReceptionForm = () => {
                     options={renderOptions(units)}
                     icon={Car}
                   />
-                  <Input
+                  <Select
                     label="Tipo"
                     name="type"
                     value={formData.type}
                     onChange={handleChange}
+                    options={types.map((type) => (
+                      <option key={type._id} value={type.name}>
+                        {type.name}
+                      </option>
+                    ))}
                     icon={Tool}
                   />
                   <Input
@@ -423,13 +526,6 @@ const ReceptionForm = () => {
                     value={formData.brand}
                     onChange={handleChange}
                     icon={Package}
-                  />
-                  <Input
-                    label="Cotización"
-                    name="quotation"
-                    value={formData.quotation}
-                    onChange={handleChange}
-                    icon={FileText}
                   />
                   <Input
                     label="Color"
@@ -583,7 +679,6 @@ const ReceptionForm = () => {
                         <h3 className="text-lg font-semibold text-gray-800">{clientName}</h3>
                         <p className="text-gray-600">{modelName} - {reception.type} - {reception.brand}</p>
                         <p className="text-gray-500">Teléfono: {reception.phone}</p>
-                        <p className="text-gray-500">Cotización: ${reception.quotation.toFixed(2)}</p>
                       </div>
                     </div>
                     <div className="flex space-x-2">
@@ -607,6 +702,13 @@ const ReceptionForm = () => {
                       >
                         <Printer className="h-4 w-4" />
                         <span>Imprimir</span>
+                      </button>
+                      <button
+                        onClick={() => handleGoToQuotes(reception)}
+                        className="flex items-center gap-1 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                      >
+                        <FileText className="h-4 w-4" />
+                        <span>Ir a Cotización</span>
                       </button>
                     </div>
                   </div>
@@ -694,15 +796,23 @@ const Section = ({ title, name, data, onChange, icon: Icon }) => (
       <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
     </div>
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-      {Object.keys(data).map(key => (
-        <Checkbox
-          key={key}
-          label={key.charAt(0).toUpperCase() + key.slice(1)}
-          name={`${name}.${key}`}
-          checked={data[key]}
-          onChange={onChange}
-        />
-      ))}
+      {Object.keys(data).map((key) => {
+        // Personalizar etiquetas
+        const label =
+          key === 'ibr'
+            ? 'Activar IBR'
+            : key.charAt(0).toUpperCase() + key.slice(1);
+
+        return (
+          <Checkbox
+            key={key}
+            label={label}
+            name={`${name}.${key}`}
+            checked={data[key]}
+            onChange={onChange}
+          />
+        );
+      })}
     </div>
   </div>
 );
@@ -719,3 +829,14 @@ const Checkbox = ({ label, ...props }) => (
 );
 
 export default ReceptionForm;
+
+export const getReceptions = async (req, res) => {
+  try {
+    const receptions = await Reception.find()
+      .populate('client') // Poblamos el cliente
+      .populate('model'); // Poblamos el modelo
+    res.status(200).json(receptions);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};

@@ -11,6 +11,7 @@ const Inventory: React.FC = () => {
   const refreshInventory = () => {
     axios.get("http://localhost:5000/api/inventory")
       .then((response) => {
+        console.log("Datos del inventario:", response.data); // Verifica aquí los nombres de las secciones
         setInventory(response.data);
         setFilteredInventory(response.data);
       })
@@ -86,7 +87,7 @@ const Inventory: React.FC = () => {
       {Object.keys(filteredInventory).map((section) => (
         <div key={section} className="mt-8">
           <h2 className="text-2xl font-semibold text-gray-700 mb-4 border-b border-gray-300 pb-2">
-            📂 Sección: {section}
+            📂 Sección: {section} {/* Aquí se muestra el nombre de la sección */}
           </h2>
 
           {Object.keys(filteredInventory[section]).map((subsection) => (

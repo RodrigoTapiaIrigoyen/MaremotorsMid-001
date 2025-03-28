@@ -1,22 +1,46 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { getServices, createService, deleteService, Service } from '../../services/services.services';
 
 const Services: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
+  const [categories, setCategories] = useState<string[]>([]); // Estado para las categorías
   const [newService, setNewService] = useState({
     name: '',
     description: '',
     price: 0,
     category: '',
-    currency: 'MXN'
+    currency: 'MXN',
   });
+
+  // Categorías predefinidas
+  const predefinedCategories = [
+    'Marina Seca',
+    'Mecánica',
+    'Fibra de Vidrio',
+    'Pintura',
+    'Lavado',
+    'Remolque',
+  ];
 
   useEffect(() => {
     const fetchServices = async () => {
       const servicesData = await getServices();
       setServices(servicesData);
     };
+
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/catalog/categories'); // Cargar categorías del backend
+        const dynamicCategories = response.data.map((category: any) => category.name); // Extraer nombres de las categorías
+        setCategories([...predefinedCategories, ...dynamicCategories]); // Combinar predefinidas y dinámicas
+      } catch (error) {
+        console.error('Error al cargar las categorías:', error);
+      }
+    };
+
     fetchServices();
+    fetchCategories();
   }, []);
 
   const handleAddService = async () => {
@@ -63,12 +87,11 @@ const Services: React.FC = () => {
             className="border p-2 mr-2 rounded w-full mb-2"
           >
             <option value="">Selecciona una categoría</option>
-            <option value="Marina Seca">Marina Seca</option>
-            <option value="Mecánica">Mecánica</option>
-            <option value="Fibra de Vidrio">Fibra de Vidrio</option>
-            <option value="Pintura">Pintura</option>
-            <option value="Lavado">Lavado</option>
-            <option value="Remolque">Remolque</option>
+            {categories.map((category, index) => (
+              <option key={index} value={category}>
+                {category}
+              </option>
+            ))}
           </select>
           <select
             value={newService.currency}
@@ -76,20 +99,35 @@ const Services: React.FC = () => {
             className="border p-2 mr-2 rounded w-full mb-2"
           >
             <option value="MXN">Pesos Mexicanos</option>
-            <option value="USD">Dólares</option>
+           
           </select>
-          <button onClick={handleAddService} className="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600">Añadir Servicio</button>
+          <button
+            onClick={handleAddService}
+            className="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600"
+          >
+            Añadir Servicio
+          </button>
         </div>
         <ul className="mt-4 space-y-4">
           {services.map((service) => (
-            <li key={service._id} className="bg-white p-4 rounded-lg shadow flex justify-between items-center">
+            <li
+              key={service._id}
+              className="bg-white p-4 rounded-lg shadow flex justify-between items-center"
+            >
               <div>
                 <span className="block text-lg font-semibold text-gray-800">{service.name}</span>
                 <span className="block text-gray-600">{service.description}</span>
-                <span className="block text-gray-600">{service.price} {service.currency}</span>
+                <span className="block text-gray-600">
+                  {service.price} {service.currency}
+                </span>
                 <span className="block text-gray-600">{service.category}</span>
               </div>
-              <button onClick={() => handleDeleteService(service._id)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Eliminar</button>
+              <button
+                onClick={() => handleDeleteService(service._id)}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                Eliminar
+              </button>
             </li>
           ))}
         </ul>

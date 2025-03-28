@@ -145,6 +145,7 @@ const Quotes: React.FC = () => {
   };
 
   const filteredQuotes = quotes.filter((quote) =>
+    quote.status !== 'archived' && // Excluir cotizaciones archivadas
     getClientName(quote.client).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -194,8 +195,14 @@ const Quotes: React.FC = () => {
   };
 
   const handleFormSubmit = (updatedQuote: Quote) => {
-    setQuotes(quotes.map((quote) => (quote._id === updatedQuote._id ? updatedQuote : quote)));
-    setSelectedQuote(null);
+    if (updatedQuote.status === 'archived') {
+      // Si el estado es 'archived', eliminar la cotización de la lista principal
+      setQuotes(quotes.filter((quote) => quote._id !== updatedQuote._id));
+    } else {
+      // Si no está archivada, actualizar la cotización en la lista principal
+      setQuotes(quotes.map((quote) => (quote._id === updatedQuote._id ? updatedQuote : quote)));
+    }
+    setSelectedQuote(null); // Limpiar la cotización seleccionada
   };
 
   const handleGeneratePDF = (quote: Quote) => {
@@ -218,7 +225,7 @@ const Quotes: React.FC = () => {
       const doc = new jsPDF();
 
       // Add logo
-      doc.addImage('src/logo/Maremotors.png', 'PNG', 10, 10, 30, 20);
+      doc.addImage('src/logo/Maremotors.png', 'PNG', 10, 10, 20, 20);
 
       doc.setFontSize(16);
       doc.setTextColor(40);

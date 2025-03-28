@@ -19,6 +19,8 @@ import unitRoutes from './routes/unitRoutes.js';
 import currencyRoutes from './routes/currencyRoutes.js';
 import exchangeRateRoutes from './routes/exchangeRateRoutes.js';
 import reportsRoutes from "./routes/reports.routes.js"; // Importa las rutas de reports
+import categoryRoutes from './routes/categoryRoutes.js'; // Importar las rutas de categorías, tipos y secciones
+
 
 import http from 'http';
 import { Server } from 'socket.io';
@@ -69,6 +71,7 @@ app.use('/api/units', unitRoutes);
 app.use('/api/currencies', currencyRoutes);
 app.use('/api/exchangeRates', exchangeRateRoutes);
 app.use("/api/reports", reportsRoutes); // Agrega las rutas de reports
+app.use('/api/catalog', categoryRoutes); // Registrar las rutas de categorías, tipos y secciones
 
 // Conexión a MongoDB
 
