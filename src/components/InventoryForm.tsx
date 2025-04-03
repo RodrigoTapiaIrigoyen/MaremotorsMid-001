@@ -82,21 +82,7 @@ const InventoryForm = ({ onInventoryUpdated, inventoryItemToEdit }) => {
         <label className="block text-gray-700">Sección</label>
         <select {...register("section", { required: true })} className="border p-2 w-full rounded">
           <option value="">Seleccionar Sección</option>
-          {/* Opciones con nombres completos */}
-          <option value="Motores">Motores</option>
-          <option value="Eléctrico">Eléctrico</option>
-          <option value="Componentes de Escape">Componentes de Escape</option>
-          <option value="Cables">Cables</option>
-          <option value="Turbina">Turbina</option>
-          <option value="Gasolina">Gasolina</option>
-          <option value="Remolque">Remolque</option>
-          <option value="Accesorios">Accesorios</option>
-          <option value="Conducción">Conducción</option>
-          <option value="Intercooler">Intercooler</option>
-          <option value="Casco">Casco</option>
-          <option value="Aceite">Aceite</option>
-          <option value="Filtros">Filtros</option>
-          <option value="Bujías">Bujías</option>
+         
           {/* Opciones dinámicas */}
           {dynamicSections.map((section, index) => (
             <option key={`dynamic-${index}`} value={section}>

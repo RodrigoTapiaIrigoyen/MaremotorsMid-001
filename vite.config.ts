@@ -7,4 +7,9 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  server: {
+    proxy: {
+      '/api': 'https://hammerhead-app-pz4dz.ondigitalocean.app', // URL de tu backend en DigitalOcean
+    },
+  },
 });

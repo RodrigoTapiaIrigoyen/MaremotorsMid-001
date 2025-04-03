@@ -13,33 +13,26 @@ const Services: React.FC = () => {
     currency: 'MXN',
   });
 
-  // Categorías predefinidas
-  const predefinedCategories = [
-    'Marina Seca',
-    'Mecánica',
-    'Fibra de Vidrio',
-    'Pintura',
-    'Lavado',
-    'Remolque',
-  ];
-
   useEffect(() => {
     const fetchServices = async () => {
       const servicesData = await getServices();
       setServices(servicesData);
     };
 
+    fetchServices();
+  }, []);
+
+  useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get('http://localhost:5000/api/catalog/categories'); // Cargar categorías del backend
         const dynamicCategories = response.data.map((category: any) => category.name); // Extraer nombres de las categorías
-        setCategories([...predefinedCategories, ...dynamicCategories]); // Combinar predefinidas y dinámicas
+        setCategories(dynamicCategories); // Usar solo las categorías dinámicas
       } catch (error) {
         console.error('Error al cargar las categorías:', error);
       }
     };
 
-    fetchServices();
     fetchCategories();
   }, []);
 
@@ -87,6 +80,7 @@ const Services: React.FC = () => {
             className="border p-2 mr-2 rounded w-full mb-2"
           >
             <option value="">Selecciona una categoría</option>
+            {/* Opciones dinámicas obtenidas desde el backend */}
             {categories.map((category, index) => (
               <option key={index} value={category}>
                 {category}

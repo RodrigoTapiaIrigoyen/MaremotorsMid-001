@@ -47,6 +47,7 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }: ProductFor
   });
 
   const [error, setError] = useState<string | null>(null);
+  const [dynamicSections, setDynamicSections] = useState<string[]>([]);
 
   useEffect(() => {
     if (productToEdit && currencies.length > 0) {
@@ -77,6 +78,16 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }: ProductFor
       });
     }
   }, [productToEdit, currencies]);
+
+  useEffect(() => {
+    // Obtener las secciones dinámicas desde el backend
+    axios
+      .get("http://localhost:5000/api/catalog/sections")
+      .then((response) => {
+        setDynamicSections(response.data.map((section) => section.name)); // Extraer nombres de las secciones
+      })
+      .catch((err) => console.error("Error al obtener las secciones:", err));
+  }, []);
 
   const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const currencyId = e.target.value;
@@ -229,20 +240,12 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }: ProductFor
           className="border p-2 w-full rounded"
         >
           <option value="">Seleccionar Sección</option>
-          <option value="Motores">Motores</option>
-          <option value="Eléctrico">Eléctrico</option>
-          <option value="Componentes de Escape">Componentes de Escape</option>
-          <option value="Cables">Cables</option>
-          <option value="Turbina">Turbina</option>
-          <option value="Gasolina">Gasolina</option>
-          <option value="Remolque">Remolque</option>
-          <option value="Accesorios">Accesorios</option>
-          <option value="Conducción">Conducción</option>
-          <option value="Intercooler">Intercooler</option>
-          <option value="Casco">Casco</option>
-          <option value="Aceite">Aceite</option>
-          <option value="Filtros">Filtros</option>
-          <option value="Bujías">Bujías</option>
+          {/* Opciones dinámicas obtenidas desde el backend */}
+          {dynamicSections.map((section, index) => (
+            <option key={`dynamic-${index}`} value={section}>
+              {section}
+            </option>
+          ))}
         </select>
       </div>
       <div className="mb-2">
