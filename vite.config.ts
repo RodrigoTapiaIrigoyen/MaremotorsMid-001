@@ -8,8 +8,12 @@ export default defineConfig({
     exclude: ['lucide-react'],
   },
   server: {
-    proxy: {
-      '/api': 'https://hammerhead-app-pz4dz.ondigitalocean.app', // URL de tu backend en DigitalOcean
-    },
+    proxy: process.env.NODE_ENV === 'development' ? {
+      '/api': {
+        target: process.env.VITE_API_URL || 'https://hammerhead-app-pz4dz.ondigitalocean.app', // URL del backend
+        changeOrigin: true,
+        secure: false,
+      },
+    } : undefined, // No usar proxy en producción
   },
 });

@@ -1,10 +1,3 @@
-import axios from 'axios';
+import api from '../utils/api'; // Importa la instancia centralizada de Axios
 
-const axiosInstance = axios.create({
-  baseURL: 'http://localhost:5000/api', // Asegúrate de que la URL base sea correcta
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-export default axiosInstance;
+export default api;

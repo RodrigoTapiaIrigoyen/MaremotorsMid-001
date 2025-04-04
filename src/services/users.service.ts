@@ -1,5 +1,5 @@
 // services/users.service.ts
-import api from './api'; // Importa la instancia de Axios
+import api from '../utils/api'; // Importa la instancia de Axios
 
 // Función para obtener todos los usuarios
 export const getUsers = async () => {

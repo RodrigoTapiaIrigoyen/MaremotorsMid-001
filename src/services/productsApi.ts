@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:5000/api/products"; // Ajusta según tu servidor
+import api from "../utils/api"; // Importa la instancia centralizada de Axios
 
 // Definimos el tipo de Producto
 export interface Product {
@@ -16,23 +14,23 @@ export interface Product {
 
 // Obtener todos los productos
 export const getProducts = async (): Promise<Product[]> => {
-  const response = await axios.get<Product[]>(API_URL);
+  const response = await api.get<Product[]>("/products"); // Usa la instancia de Axios
   return response.data;
 };
 
 // Crear un producto
 export const createProduct = async (productData: Product): Promise<Product> => {
-  const response = await axios.post<Product>(API_URL, productData);
+  const response = await api.post<Product>("/products", productData); // Usa la instancia de Axios
   return response.data;
 };
 
 // Actualizar un producto
 export const updateProduct = async (id: string, productData: Product): Promise<Product> => {
-  const response = await axios.put<Product>(`${API_URL}/${id}`, productData);
+  const response = await api.put<Product>(`/products/${id}`, productData); // Usa la instancia de Axios
   return response.data;
 };
 
 // Eliminar un producto
 export const deleteProduct = async (id: string): Promise<void> => {
-  await axios.delete(`${API_URL}/${id}`);
+  await api.delete(`/products/${id}`); // Usa la instancia de Axios
 };

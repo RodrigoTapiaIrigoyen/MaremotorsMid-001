@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from '../utils/api'; // Importa la instancia centralizada de Axios
 
 export interface Service {
   id: string;
@@ -30,11 +30,9 @@ export interface Quote {
   products: Product[];
 }
 
-const API_URL = 'http://localhost:5000/api/quotes';
-
 export const getQuotes = async (): Promise<Quote[]> => {
   try {
-    const response = await axios.get(API_URL);
+    const response = await api.get<Quote[]>('/quotes'); // Usa la instancia de Axios
     return response.data;
   } catch (error) {
     console.error('Error fetching quotes:', error);
@@ -44,7 +42,7 @@ export const getQuotes = async (): Promise<Quote[]> => {
 
 export const createQuote = async (quote: Quote): Promise<Quote> => {
   try {
-    const response = await axios.post(API_URL, quote);
+    const response = await api.post<Quote>('/quotes', quote); // Usa la instancia de Axios
     return response.data;
   } catch (error) {
     console.error('Error creating quote:', error);
@@ -54,7 +52,7 @@ export const createQuote = async (quote: Quote): Promise<Quote> => {
 
 export const updateQuote = async (id: string, quote: Quote): Promise<Quote> => {
   try {
-    const response = await axios.put(`${API_URL}/${id}`, quote);
+    const response = await api.put<Quote>(`/quotes/${id}`, quote); // Usa la instancia de Axios
     return response.data;
   } catch (error) {
     console.error('Error updating quote:', error);
@@ -64,7 +62,7 @@ export const updateQuote = async (id: string, quote: Quote): Promise<Quote> => {
 
 export const deleteQuote = async (id: string): Promise<void> => {
   try {
-    await axios.delete(`${API_URL}/${id}`);
+    await api.delete(`/quotes/${id}`); // Usa la instancia de Axios
   } catch (error) {
     console.error('Error deleting quote:', error);
     throw error;

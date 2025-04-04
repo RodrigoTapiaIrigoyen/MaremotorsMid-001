@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from '../utils/api'; // Importa la instancia centralizada de Axios
 
 export interface Service {
   _id: string;
@@ -9,11 +9,9 @@ export interface Service {
   currency: string;
 }
 
-const API_URL = 'http://localhost:5000/api/services';
-
 export const getServices = async (): Promise<Service[]> => {
   try {
-    const response = await axios.get(API_URL);
+    const response = await api.get<Service[]>('/services'); // Usa la instancia de Axios
     return response.data;
   } catch (error) {
     console.error('Error fetching services:', error);
@@ -23,7 +21,7 @@ export const getServices = async (): Promise<Service[]> => {
 
 export const createService = async (service: Service): Promise<Service> => {
   try {
-    const response = await axios.post(API_URL, service);
+    const response = await api.post<Service>('/services', service); // Usa la instancia de Axios
     return response.data;
   } catch (error) {
     console.error('Error creating service:', error);
@@ -33,7 +31,7 @@ export const createService = async (service: Service): Promise<Service> => {
 
 export const deleteService = async (id: string): Promise<void> => {
   try {
-    await axios.delete(`${API_URL}/${id}`);
+    await api.delete(`/services/${id}`); // Usa la instancia de Axios
   } catch (error) {
     console.error('Error deleting service:', error);
     throw error;

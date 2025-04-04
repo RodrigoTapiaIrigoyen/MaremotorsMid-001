@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../utils/api'; // Importa la instancia centralizada de Axios
 import { Client } from '../types';
 
 export const getClients = async () => {

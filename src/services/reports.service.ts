@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../utils/api';
 
 export const getInventoryReport = async () => {
   const { data } = await api.get('/reports/inventory');
