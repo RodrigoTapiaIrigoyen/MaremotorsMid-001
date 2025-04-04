@@ -99,6 +99,15 @@ app.use((err, req, res, next) => {
   res.status(500).send('Algo salió mal en el servidor');
 });
 
+// Servir archivos estáticos del frontend
+const __dirname = path.resolve();
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Redirigir todas las rutas al index.html
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 // Asegúrate de que todas las rutas no resueltas redirijan al index.html
 app.use((req, res, next) => {
   if (!req.originalUrl.startsWith('/api')) {
