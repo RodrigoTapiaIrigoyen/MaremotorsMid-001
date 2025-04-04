@@ -105,15 +105,10 @@ app.use(express.static(path.join(__dirname, 'dist')));
 
 // Redirigir todas las rutas al index.html
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-// Asegúrate de que todas las rutas no resueltas redirijan al index.html
-app.use((req, res, next) => {
   if (!req.originalUrl.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
   } else {
-    next();
+    res.status(404).send('API endpoint not found');
   }
 });
 
