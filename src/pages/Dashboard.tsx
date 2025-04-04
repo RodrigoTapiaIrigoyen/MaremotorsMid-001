@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import api from '../utils/api';
 import {
   BarChart,
   Bar,
@@ -31,10 +32,10 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         const [salesResponse, quotesResponse, clientsResponse, productsResponse] = await Promise.all([
-          axios.get('http://localhost:5000/api/sales'),
-          axios.get('http://localhost:5000/api/quotes'),
-          axios.get('http://localhost:5000/api/clients'),
-          axios.get('http://localhost:5000/api/products'),
+          api.get('/sales'),
+          api.get('/quotes'),
+          api.get('/clients'),
+          api.get('/products'),
         ]);
   
         const salesData = salesResponse.data;

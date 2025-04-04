@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ProductList from "../../components/ProductList";
 import ProductForm from "../../components/ProductForm";
-import axios from "axios";
+import api from '../../utils/api';
 
 const Products: React.FC = () => {
   const [refresh, setRefresh] = useState(false);
@@ -19,7 +19,7 @@ const Products: React.FC = () => {
 
   const handleDeleteProduct = async (productId: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/products/${productId}`);
+      await api.delete(`/products/${productId}`);
       refreshProducts();
     } catch (error) {
       console.error("Error deleting product:", error);
@@ -28,7 +28,7 @@ const Products: React.FC = () => {
 
   useEffect(() => {
     // Obtener productos
-    axios.get("http://localhost:5000/api/products")
+    api.get('/products')
       .then((response) => {
         setProducts(response.data);
         checkLowStock(response.data);
@@ -38,7 +38,7 @@ const Products: React.FC = () => {
 
   useEffect(() => {
     // Obtener monedas
-    axios.get("http://localhost:5000/api/currencies")
+    api.get('/currencies')
       .then((response) => {
         setCurrencies(response.data);
       })

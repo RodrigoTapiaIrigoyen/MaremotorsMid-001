@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Plus, Trash2, FileText, Download, ClipboardCheck, ChevronRight, Package2, Wrench, DollarSign } from 'lucide-react';
@@ -32,10 +32,10 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
     const fetchResources = async () => {
       try {
         const [products, services, clients, mechanics] = await Promise.all([
-          axios.get('http://localhost:5000/api/products'),
-          axios.get('http://localhost:5000/api/services'),
-          axios.get('http://localhost:5000/api/clients'),
-          axios.get('http://localhost:5000/api/mechanics'),
+          api.get('/products'),
+          api.get('/services'),
+          api.get('/clients'),
+          api.get('/mechanics'),
         ]);
         setResources({ products: products.data, services: services.data, clients: clients.data, mechanics: mechanics.data });
       } catch (error) {
@@ -155,10 +155,10 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
 
       let response;
       if (initialQuote?._id) {
-        response = await axios.put(`http://localhost:5000/api/quotes/${initialQuote._id}`, quoteData);
+        response = await api.put(`/quotes/${initialQuote._id}`, quoteData);
         window.location.reload();
       } else {
-        response = await axios.post('http://localhost:5000/api/quotes', quoteData);
+        response = await api.post('/quotes', quoteData);
       }
 
       if (status === 'approved') {
@@ -167,7 +167,7 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
             const product = resources.products.find(p => p._id === item.productId);
             if (product) {
               const newStock = product.stock - item.quantity;
-              await axios.put(`http://localhost:5000/api/products/${item.productId}`, { stock: newStock });
+              await api.put(`/products/${item.productId}`, { stock: newStock });
             }
           }
         }
@@ -177,7 +177,7 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
           total,
           items: validItems,
         };
-        await axios.post(`http://localhost:5000/api/clients/${formData.client}/sales`, sale);
+        await api.post(`/clients/${formData.client}/sales`, sale);
       }
 
       setSuccessMessage('Quote created successfully!');

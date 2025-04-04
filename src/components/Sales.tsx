@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from '../utils/api';
 
 const Sales: React.FC = () => {
   const [sales, setSales] = useState([]);
 
   useEffect(() => {
     // Obtener ventas
-    axios.get("http://localhost:5000/api/sales")
+    api.get('/sales')
       .then((response) => {
         console.log(response.data); // Agregar este console.log para inspeccionar los datos
         setSales(response.data);

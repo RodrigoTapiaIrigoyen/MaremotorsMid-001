@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import api from '../utils/api';
 
 interface Currency {
   _id: string;
@@ -81,8 +82,7 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }: ProductFor
 
   useEffect(() => {
     // Obtener las secciones dinámicas desde el backend
-    axios
-      .get("http://localhost:5000/api/catalog/sections")
+    api.get('/catalog/sections')
       .then((response) => {
         setDynamicSections(response.data.map((section) => section.name)); // Extraer nombres de las secciones
       })
@@ -153,9 +153,9 @@ const ProductForm = ({ onProductCreated, productToEdit, currencies }: ProductFor
 
     try {
       if (product._id) {
-        await axios.put(`http://localhost:5000/api/products/${product._id}`, product);
+        await api.put(`/products/${product._id}`, product);
       } else {
-        await axios.post("http://localhost:5000/api/products", product);
+        await api.post('/products', product);
       }
       onProductCreated();
       setProduct({

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { getServices, createService, deleteService, Service } from '../../services/services.services';
 
 const Services: React.FC = () => {
@@ -25,7 +25,7 @@ const Services: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/catalog/categories'); // Cargar categorías del backend
+        const response = await api.get('/catalog/categories'); // Cargar categorías del backend
         const dynamicCategories = response.data.map((category: any) => category.name); // Extraer nombres de las categorías
         setCategories(dynamicCategories); // Usar solo las categorías dinámicas
       } catch (error) {

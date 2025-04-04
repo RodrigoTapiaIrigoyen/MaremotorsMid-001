@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import InventoryForm from "../components/InventoryForm";
-import axios from "axios";
+import api from '../utils/api';
 
 const Inventory: React.FC = () => {
   const [inventory, setInventory] = useState({});
@@ -9,7 +9,7 @@ const Inventory: React.FC = () => {
   const [inventoryItemToEdit, setInventoryItemToEdit] = useState(null);
 
   const refreshInventory = () => {
-    axios.get("http://localhost:5000/api/inventory")
+    api.get('/inventory')
       .then((response) => {
         console.log("Datos del inventario:", response.data); // Verifica aquí los nombres de las secciones
         setInventory(response.data);
@@ -27,7 +27,7 @@ const Inventory: React.FC = () => {
   };
 
   const handleDeleteInventoryItem = (id) => {
-    axios.delete(`http://localhost:5000/api/inventory/${id}`)
+    api.delete(`/inventory/${id}`)
       .then(() => {
         refreshInventory();
       })

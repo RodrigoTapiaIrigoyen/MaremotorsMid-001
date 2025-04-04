@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from '../utils/api';
 import jsPDF from "jspdf";
 import 'jspdf-autotable';
 import { Search, Plus, Minus, Trash2, Edit2, Check, Printer, ShoppingCart, Users, Package, DollarSign } from 'lucide-react';
@@ -66,7 +66,7 @@ const Sales: React.FC = () => {
 
   const fetchClients = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/clients");
+      const response = await api.get('/clients');
       setClients(response.data);
     } catch (err) {
       console.error("Error loading clients", err);
@@ -76,7 +76,7 @@ const Sales: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/products");
+      const response = await api.get('/products');
       setProducts(response.data);
     } catch (err) {
       console.error("Error loading products", err);
@@ -86,7 +86,7 @@ const Sales: React.FC = () => {
 
   const fetchSales = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/sales");
+      const response = await api.get('/sales');
       setSales(response.data);
     } catch (err) {
       console.error("Error loading sales", err);
@@ -169,7 +169,7 @@ const Sales: React.FC = () => {
         status: 'pendiente', // Estado predeterminado
       };
 
-      const response = await axios.post("http://localhost:5000/api/sales", newSale);
+      const response = await api.post('/sales', newSale);
       alert("Venta realizada con éxito");
       setSelectedClient("");
       setSelectedProducts([]);
@@ -207,7 +207,7 @@ const Sales: React.FC = () => {
         status: editingSale.status, // Incluir el estado seleccionado
       };
 
-      const response = await axios.put(`http://localhost:5000/api/sales/${editingSale._id}`, updatedSale);
+      const response = await api.put(`/sales/${editingSale._id}`, updatedSale);
       alert("Venta actualizada con éxito");
       setEditingSale(null);
       setSelectedClient("");
@@ -222,7 +222,7 @@ const Sales: React.FC = () => {
 
   const handleDeleteSale = async (saleId: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/sales/${saleId}`);
+      await api.delete(`/sales/${saleId}`);
       setSales(sales.filter(sale => sale._id !== saleId));
       alert("Venta eliminada con éxito");
     } catch (error) {
@@ -237,7 +237,7 @@ const Sales: React.FC = () => {
 
   const handleApproveSale = async (saleId: string) => {
     try {
-      await axios.put(`http://localhost:5000/api/sales/${saleId}`, { status: "aprobada" });
+      await api.put(`/sales/${saleId}`, { status: "aprobada" });
       setSales(sales.map(sale => sale._id === saleId ? { ...sale, status: "aprobada" } : sale));
       alert("Venta aprobada con éxito");
     } catch (error) {
@@ -248,7 +248,7 @@ const Sales: React.FC = () => {
 
   const handleArchiveSale = async (saleId: string) => {
     try {
-      await axios.put(`http://localhost:5000/api/sales/${saleId}`, { status: 'archivada' });
+      await api.put(`/sales/${saleId}`, { status: 'archivada' });
       setSales(sales.filter((sale) => sale._id !== saleId)); // Eliminar la venta archivada de la lista principal
       alert('Venta archivada con éxito');
     } catch (error) {

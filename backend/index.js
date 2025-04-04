@@ -48,9 +48,11 @@ const allowedOrigins = [
   'https://www.programamaremotors.com.mx' // Dominio del frontend en producción
 ];
 
+// Verifico nuevamente que el middleware de CORS esté configurado correctamente
 app.use(cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos HTTP permitidos
+  origin: '*', // Permitir cualquier origen temporalmente
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
+  allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
   credentials: true, // Permitir cookies y encabezados de autenticación
 }));
 

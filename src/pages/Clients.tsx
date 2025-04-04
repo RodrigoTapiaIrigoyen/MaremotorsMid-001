@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from '../utils/api';
 
 interface Client {
   _id: string;
@@ -43,7 +43,7 @@ const Clients: React.FC = () => {
 
   useEffect(() => {
     // Obtener clientes
-    axios.get("http://localhost:5000/api/clients")
+    api.get('/clients')
       .then((response) => {
         setClients(response.data);
       })
@@ -53,7 +53,7 @@ const Clients: React.FC = () => {
   useEffect(() => {
     if (selectedClient) {
       // Obtener ventas por cliente
-      axios.get(`http://localhost:5000/api/sales`)
+      api.get('/sales')
         .then((response) => {
           const clientSales = response.data.filter((sale: Sale) => {
             if (sale.client && typeof sale.client === 'object' && sale.client._id) {
@@ -80,10 +80,10 @@ const Clients: React.FC = () => {
       try {
         if (clientForm._id) {
           // Actualizar cliente existente
-          await axios.put(`http://localhost:5000/api/clients/${clientForm._id}`, clientForm);
+          await api.put(`/clients/${clientForm._id}`, clientForm);
         } else {
           // Crear nuevo cliente
-          await axios.post("http://localhost:5000/api/clients", clientForm);
+          await api.post('/clients', clientForm);
         }
         setClientForm({
           _id: "",
@@ -91,7 +91,7 @@ const Clients: React.FC = () => {
           email: "",
           phone: ""
         });
-        const response = await axios.get("http://localhost:5000/api/clients");
+        const response = await api.get('/clients');
         setClients(response.data);
       } catch (err) {
         console.error("Error al guardar el cliente:", err);
@@ -105,8 +105,8 @@ const Clients: React.FC = () => {
 
   const handleDeleteClient = async (clientId: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/clients/${clientId}`);
-      const response = await axios.get("http://localhost:5000/api/clients");
+      await api.delete(`/clients/${clientId}`);
+      const response = await api.get('/clients');
       setClients(response.data);
     } catch (err) {
       console.error("Error al eliminar el cliente:", err);

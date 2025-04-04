@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import axios from "axios";
+import api from '../utils/api';
 
 const InventoryForm = ({ onInventoryUpdated, inventoryItemToEdit }) => {
   const { register, handleSubmit, reset, setValue } = useForm({
@@ -16,8 +16,8 @@ const InventoryForm = ({ onInventoryUpdated, inventoryItemToEdit }) => {
 
   useEffect(() => {
     // Obtener todos los productos para el selector
-    axios
-      .get("http://localhost:5000/api/products")
+    api
+      .get("/products")
       .then((response) => {
         setProducts(response.data);
       })
@@ -26,8 +26,8 @@ const InventoryForm = ({ onInventoryUpdated, inventoryItemToEdit }) => {
 
   useEffect(() => {
     // Obtener las secciones dinámicas desde el backend
-    axios
-      .get("http://localhost:5000/api/catalog/sections")
+    api
+      .get("/catalog/sections")
       .then((response) => {
         const sections = response.data.map((section) => section.name); // Extraer nombres de las secciones
         setDynamicSections(sections); // Guardar las secciones dinámicas
@@ -46,8 +46,8 @@ const InventoryForm = ({ onInventoryUpdated, inventoryItemToEdit }) => {
   const onSubmit = (data) => {
     if (inventoryItemToEdit) {
       // Actualizar elemento de inventario existente
-      axios
-        .put(`http://localhost:5000/api/inventory/${inventoryItemToEdit._id}`, data)
+      api
+        .put(`/inventory/${inventoryItemToEdit._id}`, data)
         .then(() => {
           onInventoryUpdated();
           reset();
@@ -55,8 +55,8 @@ const InventoryForm = ({ onInventoryUpdated, inventoryItemToEdit }) => {
         .catch((err) => console.error("Error al actualizar el inventario:", err));
     } else {
       // Crear nuevo elemento de inventario
-      axios
-        .post("http://localhost:5000/api/inventory", data)
+      api
+        .post("/inventory", data)
         .then(() => {
           onInventoryUpdated();
           reset();

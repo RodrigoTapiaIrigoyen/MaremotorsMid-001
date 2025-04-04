@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 
 const InventorySettings: React.FC = () => {
   const [newCategory, setNewCategory] = useState('');
@@ -14,9 +14,9 @@ const InventorySettings: React.FC = () => {
     const fetchData = async () => {
       try {
         const [categoriesResponse, typesResponse, sectionsResponse] = await Promise.all([
-          axios.get('http://localhost:5000/api/catalog/categories'),
-          axios.get('http://localhost:5000/api/catalog/types'),
-          axios.get('http://localhost:5000/api/catalog/sections'),
+          api.get('/catalog/categories'),
+          api.get('/catalog/types'),
+          api.get('/catalog/sections'),
         ]);
 
         setCategories(categoriesResponse.data);
@@ -36,7 +36,7 @@ const InventorySettings: React.FC = () => {
       return;
     }
     try {
-      const response = await axios.post('http://localhost:5000/api/catalog/categories', { name: newCategory });
+      const response = await api.post('/catalog/categories', { name: newCategory });
       setCategories([...categories, response.data]); // Agregar la nueva categoría a la lista
       setNewCategory('');
       alert('Categoría creada con éxito');
@@ -52,7 +52,7 @@ const InventorySettings: React.FC = () => {
       return;
     }
     try {
-      const response = await axios.post('http://localhost:5000/api/catalog/types', { name: newType });
+      const response = await api.post('/catalog/types', { name: newType });
       setTypes([...types, response.data]); // Agregar el nuevo tipo a la lista
       setNewType('');
       alert('Tipo creado con éxito');
@@ -68,7 +68,7 @@ const InventorySettings: React.FC = () => {
       return;
     }
     try {
-      const response = await axios.post('http://localhost:5000/api/catalog/sections', { name: newSection });
+      const response = await api.post('/catalog/sections', { name: newSection });
       setSections([...sections, response.data]); // Agregar la nueva sección a la lista
       setNewSection('');
       alert('Sección creada con éxito');
@@ -80,7 +80,7 @@ const InventorySettings: React.FC = () => {
 
   const handleDeleteCategory = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/catalog/categories/${id}`);
+      await api.delete(`/catalog/categories/${id}`);
       setCategories(categories.filter((category) => category._id !== id)); // Eliminar la categoría de la lista
       alert('Categoría eliminada con éxito');
     } catch (error) {
@@ -91,7 +91,7 @@ const InventorySettings: React.FC = () => {
 
   const handleDeleteType = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/catalog/types/${id}`);
+      await api.delete(`/catalog/types/${id}`);
       setTypes(types.filter((type) => type._id !== id)); // Eliminar el tipo de la lista
       alert('Tipo eliminado con éxito');
     } catch (error) {
@@ -102,7 +102,7 @@ const InventorySettings: React.FC = () => {
 
   const handleDeleteSection = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/catalog/sections/${id}`);
+      await api.delete(`/catalog/sections/${id}`);
       setSections(sections.filter((section) => section._id !== id)); // Eliminar la sección de la lista
       alert('Sección eliminada con éxito');
     } catch (error) {

@@ -3,6 +3,7 @@ import axios from 'axios';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import QuoteForm from '../components/QuoteForm';
+import api from '../utils/api';
 
 interface Item {
   productId?: {
@@ -91,12 +92,14 @@ const Quotes: React.FC = () => {
   useEffect(() => {
     const fetchResources = async () => {
       try {
-        const quotesResponse = await axios.get('http://localhost:5000/api/quotes');
-        const clientsResponse = await axios.get('http://localhost:5000/api/clients');
-        const mechanicsResponse = await axios.get('http://localhost:5000/api/mechanics');
-        const productsResponse = await axios.get('http://localhost:5000/api/products');
-        const servicesResponse = await axios.get('http://localhost:5000/api/services');
-        const unitsResponse = await axios.get('http://localhost:5000/api/units');
+        const [quotesResponse, clientsResponse, mechanicsResponse, productsResponse, servicesResponse, unitsResponse] = await Promise.all([
+          api.get('/quotes'),
+          api.get('/clients'),
+          api.get('/mechanics'),
+          api.get('/products'),
+          api.get('/services'),
+          api.get('/units'),
+        ]);
         
         setQuotes(quotesResponse.data);
         setClients(clientsResponse.data);
@@ -115,7 +118,7 @@ const Quotes: React.FC = () => {
   useEffect(() => {
     const fetchReceptions = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/receptions');
+        const response = await api.get('/receptions');
         setReceptions(response.data);
       } catch (error) {
         console.error('Error fetching receptions:', error);
@@ -127,7 +130,7 @@ const Quotes: React.FC = () => {
 
   const fetchReceptions = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/receptions');
+      const response = await api.get('/receptions');
       setReceptions(response.data);
     } catch (error) {
       console.error('Error fetching receptions:', error);
@@ -151,7 +154,7 @@ const Quotes: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/quotes/${id}`);
+      await api.delete(`/quotes/${id}`);
       setQuotes(quotes.filter((quote) => quote._id !== id));
       setSelectedQuotes(new Set([...selectedQuotes].filter(quoteId => quoteId !== id)));
     } catch (error) {
@@ -161,10 +164,7 @@ const Quotes: React.FC = () => {
 
   const handleDeleteSelected = async () => {
     try {
-      const deletePromises = Array.from(selectedQuotes).map(id =>
-        axios.delete(`http://localhost:5000/api/quotes/${id}`)
-      );
-      await Promise.all(deletePromises);
+      await Promise.all(selectedQuotes.map(id => api.delete(`/quotes/${id}`)));
       setQuotes(quotes.filter(quote => !selectedQuotes.has(quote._id)));
       setSelectedQuotes(new Set());
     } catch (error) {

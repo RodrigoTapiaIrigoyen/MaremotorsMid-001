@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, ShoppingCart, ClipboardList, FileDown, Printer, Calendar } from 'lucide-react';
-import axios from 'axios';
+import api from '../utils/api';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -64,9 +64,9 @@ const Reports: React.FC = () => {
     try {
       setLoading(true);
       const [salesResponse, quotationsResponse, receptionsResponse] = await Promise.all([
-        axios.get('http://localhost:5000/api/reports/sales'),
-        axios.get('http://localhost:5000/api/reports/quotes'),
-        axios.get('http://localhost:5000/api/reports/receptions')
+        api.get('/reports/sales'),
+        api.get('/reports/quotes'),
+        api.get('/reports/receptions'),
       ]);
 
       setSalesReports(salesResponse.data);
@@ -92,7 +92,7 @@ const Reports: React.FC = () => {
         Array.from(clientIds).map(async (clientId) => {
           if (clientId) {
             try {
-              const clientResponse = await axios.get(`http://localhost:5000/api/clients/${clientId}`);
+              const clientResponse = await api.get(`/clients/${clientId}`);
               clientData[clientId] = clientResponse.data;
             } catch (error) {
               console.error(`Error fetching client with ID ${clientId}:`, error);
@@ -106,7 +106,7 @@ const Reports: React.FC = () => {
         Array.from(productIds).map(async (productId) => {
           if (productId) {
             try {
-              const productResponse = await axios.get(`http://localhost:5000/api/products/${productId}`);
+              const productResponse = await api.get(`/products/${productId}`);
               productData[productId] = productResponse.data;
             } catch (error) {
               if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -124,7 +124,7 @@ const Reports: React.FC = () => {
         Array.from(serviceIds).map(async (serviceId) => {
           if (serviceId) {
             try {
-              const serviceResponse = await axios.get(`http://localhost:5000/api/services/${serviceId}`);
+              const serviceResponse = await api.get(`/services/${serviceId}`);
               serviceData[serviceId] = serviceResponse.data;
             } catch (error) {
               if (axios.isAxiosError(error) && error.response?.status === 404) {

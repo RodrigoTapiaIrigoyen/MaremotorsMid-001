@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { FaUser, FaPhone, FaEdit, FaTrash, FaUserCog, FaPlus } from 'react-icons/fa';
-
-const API_URL = "http://localhost:5000/api/mechanics";
+import api from '../utils/api';
 
 const Mechanics = () => {
   const [mechanics, setMechanics] = useState([]);
@@ -17,8 +16,8 @@ const Mechanics = () => {
 
   const fetchMechanics = async () => {
     try {
-      const { data } = await axios.get(API_URL);
-      setMechanics(data);
+      const response = await api.get('/mechanics');
+      setMechanics(response.data);
       setError("");
     } catch (err) {
       setError("Error al cargar los mecánicos");

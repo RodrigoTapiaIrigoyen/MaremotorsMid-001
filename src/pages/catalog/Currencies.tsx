@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 
 interface Currency {
   _id: string;
@@ -20,7 +20,7 @@ const Currencies: React.FC = () => {
   useEffect(() => {
     const fetchCurrencies = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/currencies');
+        const response = await api.get('/currencies');
         setCurrencies(response.data);
       } catch (error) {
         console.error('Error fetching currencies:', error);
@@ -37,7 +37,7 @@ const Currencies: React.FC = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/currencies', newCurrency);
+      const response = await api.post('/currencies', newCurrency);
       setCurrencies([...currencies, response.data]);
       setNewCurrency({ name: '', symbol: '', exchangeRate: 0 });
       setShowAddModal(false);
@@ -48,7 +48,7 @@ const Currencies: React.FC = () => {
 
   const handleDeleteCurrency = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/currencies/${id}`);
+      await api.delete(`/currencies/${id}`);
       setCurrencies(currencies.filter((currency) => currency._id !== id));
     } catch (error) {
       console.error('Error deleting currency:', error);
@@ -62,7 +62,7 @@ const Currencies: React.FC = () => {
     }
 
     try {
-      const response = await axios.put(`http://localhost:5000/api/currencies/${id}`, { exchangeRate: newRate });
+      const response = await api.put(`/currencies/${id}`, { exchangeRate: newRate });
       setCurrencies(currencies.map(currency => 
         currency._id === id 
           ? { ...currency, exchangeRate: response.data.exchangeRate }

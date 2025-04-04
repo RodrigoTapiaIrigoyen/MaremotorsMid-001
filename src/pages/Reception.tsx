@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { FileText, Printer, Trash2, Edit, Plus, ChevronRight, Car, PenTool as Tool, Package, ClipboardCheck, AlertTriangle, Settings, Truck, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 
 const initialFormData = {
   reception: '',
@@ -73,9 +74,9 @@ const ReceptionForm = () => {
     const fetchData = async () => {
       try {
         const [receptionsResponse, clientsResponse, unitsResponse] = await Promise.all([
-          axios.get('http://localhost:5000/api/receptions'),
-          axios.get('http://localhost:5000/api/clients'),
-          axios.get('http://localhost:5000/api/units'),
+          api.get('/receptions'),
+          api.get('/clients'),
+          api.get('/units'),
         ]);
 
         console.log('Recepciones cargadas:', receptionsResponse.data); // Verificar los datos
@@ -94,7 +95,7 @@ const ReceptionForm = () => {
   useEffect(() => {
     const fetchTypes = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/catalog/types');
+        const response = await api.get('/catalog/types');
         setTypes(response.data);
       } catch (error) {
         console.error('Error al cargar los tipos:', error);
@@ -126,16 +127,16 @@ const ReceptionForm = () => {
       };
 
       if (editingReception) {
-        await axios.put(`http://localhost:5000/api/receptions/${editingReception._id}`, submissionData);
+        await api.put(`/receptions/${editingReception._id}`, submissionData);
         setSuccessMessage('Recepción actualizada con éxito');
       } else {
-        await axios.post('http://localhost:5000/api/receptions', submissionData);
+        await api.post('/receptions', submissionData);
         setSuccessMessage('Recepción registrada con éxito');
       }
       
       setFormData(initialFormData);
       setEditingReception(null);
-      const response = await axios.get('http://localhost:5000/api/receptions');
+      const response = await api.get('/receptions');
       setReceptions(response.data);
       setErrorMessage(null);
     } catch (error) {
@@ -158,9 +159,9 @@ const ReceptionForm = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/receptions/${id}`);
+      await api.delete(`/receptions/${id}`);
       setSuccessMessage('Recepción eliminada con éxito');
-      const response = await axios.get('http://localhost:5000/api/receptions');
+      const response = await api.get('/receptions');
       setReceptions(response.data);
       setErrorMessage(null);
     } catch (error) {
@@ -171,9 +172,9 @@ const ReceptionForm = () => {
 
   const handleDeleteSelected = async () => {
     try {
-      await Promise.all(selectedReceptions.map(id => axios.delete(`http://localhost:5000/api/receptions/${id}`)));
+      await Promise.all(selectedReceptions.map(id => api.delete(`/receptions/${id}`)));
       setSuccessMessage('Recepciones eliminadas con éxito');
-      const response = await axios.get('http://localhost:5000/api/receptions');
+      const response = await api.get('/receptions');
       setReceptions(response.data);
       setSelectedReceptions([]);
       setErrorMessage(null);
