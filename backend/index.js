@@ -24,6 +24,7 @@ import categoryRoutes from './routes/categoryRoutes.js'; // Importar las rutas d
 
 import http from 'http';
 import { Server } from 'socket.io';
+import path from 'path';
 
 dotenv.config();
 
@@ -96,6 +97,15 @@ app.get('/', (req, res) => {
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Algo salió mal en el servidor');
+});
+
+// Asegúrate de que todas las rutas no resueltas redirijan al index.html
+app.use((req, res, next) => {
+  if (!req.originalUrl.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  } else {
+    next();
+  }
 });
 
 server.listen(PORT, () => {
