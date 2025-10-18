@@ -127,7 +127,7 @@ export default function Layout() {
             </div>
             <button
               type="button"
-              className="ml-auto -m-2.5 p-2.5 text-gray-700 dark:text-gray-300"
+              className="ml-auto -m-2.5 p-2.5 text-gray-700 dark:text-gray-300 hidden"
               onClick={() => setDarkMode(!darkMode)}
             >
               <span className="sr-only">Toggle dark mode</span>
@@ -197,7 +197,7 @@ export default function Layout() {
           </div>
           <button
             type="button"
-            className="ml-auto -m-2.5 p-2.5 text-gray-700 dark:text-gray-300"
+            className="ml-auto -m-2.5 p-2.5 text-gray-700 dark:text-gray-300 hidden"
             onClick={() => setDarkMode(!darkMode)}
           >
             <span className="sr-only">Toggle dark mode</span>
