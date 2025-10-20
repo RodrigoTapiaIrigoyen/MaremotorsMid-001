@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import QuoteForm from '../components/QuoteForm';
 import api from '../utils/api';
+import logoBase64 from '../logo/MaremotorsBase64';
 
 interface Item {
   productId?: {
@@ -225,7 +226,7 @@ const Quotes: React.FC = () => {
       const doc = new jsPDF();
 
       // Add logo
-      doc.addImage('src/logo/Maremotors.png', 'PNG', 10, 10, 20, 20);
+      doc.addImage(logoBase64, 'PNG', 10, 10, 20, 20);
 
       doc.setFontSize(16);
       doc.setTextColor(40);

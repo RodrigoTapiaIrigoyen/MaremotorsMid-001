@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, ShoppingCart, ClipboardList, FileDown, Printer, Calendar } from 'lucide-react';
 import api from '../utils/api';
+import axios from 'axios';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import logoBase64 from '../logo/MaremotorsBase64';
 
 // Define status types for better type safety
 type StatusType = 'archivada' | 'archived';
@@ -110,7 +112,9 @@ const Reports: React.FC = () => {
               productData[productId] = productResponse.data;
             } catch (error) {
               if (axios.isAxiosError(error) && error.response?.status === 404) {
-                console.error(`Product with ID ${productId} not found.`);
+                // Si el producto fue eliminado manualmente, asignamos un placeholder
+                console.warn(`Product with ID ${productId} not found.`);
+                productData[productId] = { name: 'Producto no disponible' };
               } else {
                 console.error(`Error fetching product with ID ${productId}:`, error);
               }
@@ -163,7 +167,7 @@ const Reports: React.FC = () => {
   const handlePrintPDF = (type: string, report: Report) => {
     const doc = new jsPDF();
     const title = `Reporte Individual - ${clients[report.client]?.name || 'Cliente'}`;
-    doc.addImage('src/logo/Maremotors.png', 'PNG', 10, 10, 20, 20);
+    doc.addImage(logoBase64, 'PNG', 10, 10, 20, 20);
     
     // Header
     doc.setFontSize(20);

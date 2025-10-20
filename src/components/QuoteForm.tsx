@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Plus, Trash2, FileText, Download, ClipboardCheck, ChevronRight, Package2, Wrench, DollarSign } from 'lucide-react';
 import { useLocation } from 'react-router-dom'; // Importar useLocation
+import logoBase64 from '../logo/MaremotorsBase64';
 
 const INITIAL_ITEM = { productId: '', serviceId: '', quantity: 1, type: 'product', discount: 0, currency: 'USD' };
 
@@ -202,7 +203,7 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
     const client = resources.clients.find(c => c._id === formData.client)?.name;
 
     const doc = new jsPDF();
-    doc.addImage('src/logo/Maremotors.png', 'PNG', 10, 10, 20, 20);
+    doc.addImage(logoBase64, 'PNG', 10, 10, 20, 20);
 
     doc.setFontSize(16);
     doc.setTextColor(40);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+// usar la instancia axios centralizada
 import { FaUser, FaPhone, FaEdit, FaTrash, FaUserCog, FaPlus } from 'react-icons/fa';
 import api from '../utils/api';
 
@@ -29,10 +29,10 @@ const Mechanics = () => {
     e.preventDefault();
     try {
       if (editingId) {
-        await axios.put(`${API_URL}/${editingId}`, { name, phone });
+        await api.put(`/mechanics/${editingId}`, { name, phone });
         setEditingId(null);
       } else {
-        await axios.post(API_URL, { name, phone });
+        await api.post('/mechanics', { name, phone });
       }
       setName("");
       setPhone("");
@@ -52,7 +52,7 @@ const Mechanics = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_URL}/${id}`);
+      await api.delete(`/mechanics/${id}`);
       fetchMechanics();
       setError("");
     } catch (err) {

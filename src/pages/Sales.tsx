@@ -3,6 +3,7 @@ import api from '../utils/api';
 import jsPDF from "jspdf";
 import 'jspdf-autotable';
 import { Search, Plus, Minus, Trash2, Edit2, Check, Printer, ShoppingCart, Users, Package, DollarSign } from 'lucide-react';
+import logoBase64 from '../logo/MaremotorsBase64'; // Importa el logo como base64
 
 interface Client {
   _id: string;
@@ -273,7 +274,12 @@ const Sales: React.FC = () => {
     }
   
     const doc = new jsPDF();
-    doc.addImage('src/logo/Maremotors.png', 'PNG', 10, 10, 20, 20);
+  
+    try {
+      doc.addImage(logoBase64, 'PNG', 10, 10, 20, 20); // Usa el logo en base64
+    } catch (error) {
+      console.error('Error al cargar el logo:', error);
+    }
   
     // Header
     doc.setFontSize(20);

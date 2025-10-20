@@ -5,6 +5,7 @@ import 'jspdf-autotable';
 import { FileText, Printer, Trash2, Edit, Plus, ChevronRight, Car, PenTool as Tool, Package, ClipboardCheck, AlertTriangle, Settings, Truck, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import logoBase64 from '../logo/MaremotorsBase64';
 
 const initialFormData = {
   reception: '',
@@ -148,8 +149,8 @@ const ReceptionForm = () => {
   const handleEdit = (reception) => {
     const editData = {
       ...reception,
-      client: reception.client._id || reception.client, // Asegúrate de asignar solo el ID del cliente
-      model: reception.model._id || reception.model, // Asegúrate de asignar solo el ID del modelo
+      client: reception.client ? (reception.client._id || reception.client) : '', // Asegúrate de asignar solo el ID del cliente
+      model: reception.model ? (reception.model._id || reception.model) : '', // Asegúrate de asignar solo el ID del modelo
     };
 
     setFormData(editData);
@@ -194,173 +195,171 @@ const ReceptionForm = () => {
 const handlePrintPDF = () => {
   const doc = new jsPDF();
 
-  const logo = new Image();
-  logo.src = 'src/logo/Maremotors.png';
+  // Elimino la creación del objeto Image y uso directamente logoBase64
+  doc.addImage(logoBase64, 'PNG', 10, 5, 20, 20);
 
-  logo.onload = () => {
-    // Header section
-    doc.addImage(logo, 'PNG', 10, 5, 20, 20);
-    
-    // Título principal con color suavizado
-    doc.setFontSize(14);
-    doc.setTextColor(51, 51, 51);
-    doc.text("Maremotors YAMAHA", 105, 8, { align: "center" });
-    
-    // Información de contacto con color suavizado
-    doc.setFontSize(9);
-    doc.setTextColor(68, 68, 68);
-    doc.text("Carretera Merida Progreso Kilómetro Merida 24", 105, 12, { align: "center" });
-    doc.text("San Ignacio, Yucatan • Tel: 9992383587 / 9997389040", 105, 16, { align: "center" });
-    doc.text("Horario: Lunes a Viernes de 9AM - 5PM, Sábado de 9AM - 1:30PM", 105, 20, { align: "center" });
+  // Header section
+  doc.addImage(logoBase64, 'PNG', 10, 5, 20, 20);
+  
+  // Título principal con color suavizado
+  doc.setFontSize(14);
+  doc.setTextColor(51, 51, 51);
+  doc.text("Maremotors YAMAHA", 105, 8, { align: "center" });
+  
+  // Información de contacto con color suavizado
+  doc.setFontSize(9);
+  doc.setTextColor(68, 68, 68);
+  doc.text("Carretera Merida Progreso Kilómetro Merida 24", 105, 12, { align: "center" });
+  doc.text("San Ignacio, Yucatan • Tel: 9992383587 / 9997389040", 105, 16, { align: "center" });
+  doc.text("Horario: Lunes a Viernes de 9AM - 5PM, Sábado de 9AM - 1:30PM", 105, 20, { align: "center" });
 
-    // Espacio adicional antes del aviso legal
-    doc.setFontSize(7);
-    doc.setTextColor(85, 85, 85);
-    doc.text("EXISTEN ACCESORIOS Y PARTES DE LOS VEHICULOS QUE PUEDEN TENER VICIOS OCULTOS, NO NOS HACEMOS", 105, 27, { align: "center" });
-    doc.text("REPONSABLES QUE ESTANDO EN RESGUARDO O EN EL TRANSCURSO QUE SE RECOJAN SE DAÑEN.", 105, 30, { align: "center" });
+  // Espacio adicional antes del aviso legal
+  doc.setFontSize(7);
+  doc.setTextColor(85, 85, 85);
+  doc.text("EXISTEN ACCESORIOS Y PARTES DE LOS VEHICULOS QUE PUEDEN TENER VICIOS OCULTOS, NO NOS HACEMOS", 105, 27, { align: "center" });
+  doc.text("REPONSABLES QUE ESTANDO EN RESGUARDO O EN EL TRANSCURSO QUE SE RECOJAN SE DAÑEN.", 105, 30, { align: "center" });
 
-    const selectedUnit = units.find(unit => unit._id === formData.model);
-    const modelName = selectedUnit ? selectedUnit.model || selectedUnit.name : 'Desconocido';
+  const selectedUnit = units.find(unit => unit._id === formData.model);
+  const modelName = selectedUnit ? selectedUnit.model || selectedUnit.name : 'Desconocido';
 
-    // Main information
-    const mainInfo = [
-      ["Recepción", formData.reception],
-      ["Fecha", formData.date],
-      ["Cliente", formData.client],
-      ["Teléfono", formData.phone],
-      ["Modelo", modelName],
-      ["Tipo", formData.type],
-      ["Marca", formData.brand],
-      ["Color", formData.color],
-      ["Placas", formData.plates],
-      ["Tanque de Gasolina", formData.fuelTank],
-      ["Kilómetros", formData.kilometers]
-    ];
+  // Main information
+  const mainInfo = [
+    ["Recepción", formData.reception],
+    ["Fecha", formData.date],
+    ["Cliente", formData.client],
+    ["Teléfono", formData.phone],
+    ["Modelo", modelName],
+    ["Tipo", formData.type],
+    ["Marca", formData.brand],
+    ["Color", formData.color],
+    ["Placas", formData.plates],
+    ["Tanque de Gasolina", formData.fuelTank],
+    ["Kilómetros", formData.kilometers]
+  ];
 
-    const accessories = Object.entries(formData.accessories)
-      .map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
-    
-    const aesthetics = Object.entries(formData.aesthetics)
-      .map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
-    
-    const trailer = Object.entries(formData.trailer)
-      .map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
+  const accessories = Object.entries(formData.accessories)
+    .map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
+  
+  const aesthetics = Object.entries(formData.aesthetics)
+    .map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
+  
+  const trailer = Object.entries(formData.trailer)
+    .map(([key, value]) => [key.toUpperCase(), value ? 'SI' : 'NO']);
 
-    // Configuración de las tablas con colores suavizados
-    const tableConfig = {
-      theme: 'grid',
-      styles: { 
-        fontSize: 8,
-        cellPadding: 2,
-        lineColor: [128, 128, 128],
-        lineWidth: 0.1,
-        textColor: [68, 68, 68],
-        font: 'helvetica',
-        fontStyle: 'normal'
-      },
-      headStyles: {
-        fillColor: [80, 80, 80],
-        textColor: [255, 255, 255],
-        fontSize: 9,
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      bodyStyles: {
-        fillColor: [255, 255, 255]
-      },
-      alternateRowStyles: {
-        fillColor: [248, 248, 248]
-      }
-    };
-
-    // Espacio adicional antes de las tablas principales
-    const mainTableStartY = 35;
-
-    // First column: Main info
-    doc.autoTable({
-      ...tableConfig,
-      startY: mainTableStartY,
-      body: mainInfo,
-      columnStyles: {
-        0: { cellWidth: 30, fontStyle: 'bold' },
-        1: { cellWidth: 30 }
-      },
-      margin: { left: 10 }
-    });
-
-    // Second column: Accessories
-    doc.autoTable({
-      ...tableConfig,
-      startY: mainTableStartY,
-      body: accessories,
-      columnStyles: {
-        0: { cellWidth: 30, fontStyle: 'bold' },
-        1: { cellWidth: 15, halign: 'center' }
-      },
-      margin: { left: 75 }
-    });
-
-    // Third column: Aesthetics and Trailer
-    doc.autoTable({
-      ...tableConfig,
-      startY: mainTableStartY,
-      body: [...aesthetics, ...trailer],
-      columnStyles: {
-        0: { cellWidth: 30, fontStyle: 'bold' },
-        1: { cellWidth: 15, halign: 'center' }
-      },
-      margin: { left: 125 }
-    });
-
-    // New table for Fallos and Observaciones below the three columns
-    const issuesAndObservations = [
-      ["Fallos / Problema", formData.issues],
-      ["Observaciones", formData.observations]
-    ];
-
-    const maxY = Math.max(
-      doc.lastAutoTable.finalY,
-      doc.lastAutoTable.finalY,
-      doc.lastAutoTable.finalY
-    );
-
-    const spacingAfterColumns = 15;
-
-    // Issues and Observations table con estilo mejorado
-    doc.autoTable({
-      ...tableConfig,
-      startY: maxY + spacingAfterColumns,
-      body: issuesAndObservations,
-      columnStyles: {
-        0: { cellWidth: 30, fontStyle: 'bold' },
-        1: { cellWidth: 160 }
-      },
-      margin: { left: 10 },
-      styles: {
-        ...tableConfig.styles,
-        minCellHeight: 20,
-        fontSize: 9
-      }
-    });
-
-    // Signature section con colores suavizados
-    const finalY = doc.lastAutoTable.finalY + 20;
-    
-    doc.setFontSize(9);
-    doc.setTextColor(68, 68, 68);
-    
-    // Signature boxes con líneas más suaves
-    doc.setLineWidth(0.3);
-    doc.rect(20, finalY, 70, 20);
-    doc.rect(110, finalY, 70, 20);
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text("FIRMA DE CONFORMIDAD DE RECEPCION", 55, finalY + 25, { align: "center" });
-    doc.text("FIRMA DE CONFORMIDAD DE ENTREGA", 145, finalY + 25, { align: "center" });
-
-    doc.save(`recepcion_${formData.client}.pdf`);
+  // Configuración de las tablas con colores suavizados
+  const tableConfig = {
+    theme: 'grid',
+    styles: { 
+      fontSize: 8,
+      cellPadding: 2,
+      lineColor: [128, 128, 128],
+      lineWidth: 0.1,
+      textColor: [68, 68, 68],
+      font: 'helvetica',
+      fontStyle: 'normal'
+    },
+    headStyles: {
+      fillColor: [80, 80, 80],
+      textColor: [255, 255, 255],
+      fontSize: 9,
+      fontStyle: 'bold',
+      halign: 'center'
+    },
+    bodyStyles: {
+      fillColor: [255, 255, 255]
+    },
+    alternateRowStyles: {
+      fillColor: [248, 248, 248]
+    }
   };
+
+  // Espacio adicional antes de las tablas principales
+  const mainTableStartY = 35;
+
+  // First column: Main info
+  doc.autoTable({
+    ...tableConfig,
+    startY: mainTableStartY,
+    body: mainInfo,
+    columnStyles: {
+      0: { cellWidth: 30, fontStyle: 'bold' },
+      1: { cellWidth: 30 }
+    },
+    margin: { left: 10 }
+  });
+
+  // Second column: Accessories
+  doc.autoTable({
+    ...tableConfig,
+    startY: mainTableStartY,
+    body: accessories,
+    columnStyles: {
+      0: { cellWidth: 30, fontStyle: 'bold' },
+      1: { cellWidth: 15, halign: 'center' }
+    },
+    margin: { left: 75 }
+  });
+
+  // Third column: Aesthetics and Trailer
+  doc.autoTable({
+    ...tableConfig,
+    startY: mainTableStartY,
+    body: [...aesthetics, ...trailer],
+    columnStyles: {
+      0: { cellWidth: 30, fontStyle: 'bold' },
+      1: { cellWidth: 15, halign: 'center' }
+    },
+    margin: { left: 125 }
+  });
+
+  // New table for Fallos and Observaciones below the three columns
+  const issuesAndObservations = [
+    ["Fallos / Problema", formData.issues],
+    ["Observaciones", formData.observations]
+  ];
+
+  const maxY = Math.max(
+    doc.lastAutoTable.finalY,
+    doc.lastAutoTable.finalY,
+    doc.lastAutoTable.finalY
+  );
+
+  const spacingAfterColumns = 15;
+
+  // Issues and Observations table con estilo mejorado
+  doc.autoTable({
+    ...tableConfig,
+    startY: maxY + spacingAfterColumns,
+    body: issuesAndObservations,
+    columnStyles: {
+      0: { cellWidth: 30, fontStyle: 'bold' },
+      1: { cellWidth: 160 }
+    },
+    margin: { left: 10 },
+    styles: {
+      ...tableConfig.styles,
+      minCellHeight: 20,
+      fontSize: 9
+    }
+  });
+
+  // Signature section con colores suavizados
+  const finalY = doc.lastAutoTable.finalY + 20;
+  
+  doc.setFontSize(9);
+  doc.setTextColor(68, 68, 68);
+  
+  // Signature boxes con líneas más suaves
+  doc.setLineWidth(0.3);
+  doc.rect(20, finalY, 70, 20);
+  doc.rect(110, finalY, 70, 20);
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text("FIRMA DE CONFORMIDAD DE RECEPCION", 55, finalY + 25, { align: "center" });
+  doc.text("FIRMA DE CONFORMIDAD DE ENTREGA", 145, finalY + 25, { align: "center" });
+
+  doc.save(`recepcion_${formData.client}.pdf`);
 };
 
   const handleSearch = (e) => {
@@ -381,9 +380,11 @@ const handlePrintPDF = () => {
 
   const renderOptions = (data) => {
     return data.map(item => {
-      const displayName = item.model || item.name || 'Sin nombre';
+      const displayName = (item && (item.model || item.name)) || 'Sin nombre';
+      const key = item && item._id ? item._id : Math.random().toString(36).slice(2);
+      const value = item && item._id ? item._id : '';
       return (
-        <option key={item._id} value={item._id}>
+        <option key={key} value={value}>
           {displayName}
         </option>
       );
@@ -391,7 +392,8 @@ const handlePrintPDF = () => {
   };
 
   const filteredReceptions = receptions.filter((reception) => {
-    const client = clients.find((client) => client._id === reception.client._id);
+    const receptionClientId = reception && reception.client ? (reception.client._id || reception.client) : null;
+    const client = receptionClientId ? clients.find((c) => c._id === receptionClientId) : null;
     const clientName = client ? client.name.toLowerCase() : '';
     return clientName.includes(searchQuery.toLowerCase());
   });
@@ -658,8 +660,9 @@ const handlePrintPDF = () => {
 
           <div className="space-y-4 mt-4">
             {filteredReceptions.map((reception) => {
-              const client = clients.find(client => client._id === reception.client._id);
-              const unit = units.find(unit => unit._id === reception.model);
+              const receptionClientId = reception && reception.client ? (reception.client._id || reception.client) : null;
+              const client = receptionClientId ? clients.find(client => client._id === receptionClientId) : null;
+              const unit = units.find(unit => unit._id === (reception && reception.model ? (reception.model._id || reception.model) : ''));
               const clientName = client ? client.name : 'Desconocido';
               const modelName = unit ? (unit.model || unit.name) : 'Desconocido';
               
