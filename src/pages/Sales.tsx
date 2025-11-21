@@ -428,7 +428,7 @@ const Sales: React.FC = () => {
             >
               <option value="">Selecciona un producto</option>
               {products
-                .filter(product => product.name.toLowerCase().includes(productSearchTerm.toLowerCase()))
+                .filter(product => product && product.name && product.name.toLowerCase().includes(productSearchTerm.toLowerCase()))
                 .map((product) => (
                   <option key={product._id} value={product._id}>
                     {product.name} - {product.price} {product.currency}
