@@ -34,8 +34,8 @@ export const createSale = async (req, res) => {
         return res.status(404).json({ message: `Producto con ID ${item.product} no encontrado` });
       }
 
-      // Actualizar el stock del producto
-      product.quantity -= item.quantity;
+      // Actualizar el stock del producto (corregido: usar 'stock' no 'quantity')
+      product.stock -= item.quantity;
       await product.save();
     }
 

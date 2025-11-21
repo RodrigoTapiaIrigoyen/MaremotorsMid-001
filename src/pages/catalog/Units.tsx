@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import api from '../../utils/api';
 
 interface Unit {
@@ -9,7 +8,8 @@ interface Unit {
   brand: string;
   color: string;
   plates: string;
-  client: string;
+  // client puede ser un ID (string) o un objeto con información parcial
+  client: string | { _id?: string; name?: string } | null;
 }
 
 interface Client {
@@ -28,8 +28,9 @@ const Units: React.FC = () => {
   useEffect(() => {
     const fetchUnitsAndClients = async () => {
       try {
-        const unitsResponse = await axios.get('http://localhost:5000/api/units');
-        const clientsResponse = await axios.get('http://localhost:5000/api/clients');
+        // Usar la instancia `api` que respeta VITE_API_URL
+        const unitsResponse = await api.get('/units');
+        const clientsResponse = await api.get('/clients');
         setUnits(unitsResponse.data);
         setClients(clientsResponse.data);
       } catch (error) {
@@ -43,7 +44,7 @@ const Units: React.FC = () => {
   useEffect(() => {
     const fetchTypes = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/catalog/types');
+        const response = await api.get('/catalog/types');
         setTypes(response.data); // Supongamos que la API devuelve un array de objetos con { _id, name }
       } catch (error) {
         console.error('Error al cargar los tipos:', error);
@@ -55,7 +56,7 @@ const Units: React.FC = () => {
 
   const handleAddUnit = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/api/units', newUnit);
+  const response = await api.post('/units', newUnit);
       setUnits([...units, response.data]);
       setNewUnit({ model: '', type: '', brand: '', color: '', plates: '', client: '' });
     } catch (error) {
@@ -65,7 +66,7 @@ const Units: React.FC = () => {
 
   const handleDeleteUnit = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/units/${id}`);
+  await api.delete(`/units/${id}`);
       setUnits(units.filter((unit) => unit._id !== id));
     } catch (error) {
       console.error('Error deleting unit:', error);
@@ -80,7 +81,8 @@ const Units: React.FC = () => {
       brand: unit.brand,
       color: unit.color,
       plates: unit.plates,
-      client: typeof unit.client === 'object' ? unit.client._id : unit.client, // Asegúrate de que sea un ID
+      // Aseguramos que no accedamos a propiedades de null
+      client: unit.client && typeof unit.client === 'object' ? (unit.client._id ?? '') : (unit.client ?? ''), // Asegúrate de que sea un ID
     });
   };
 
@@ -94,7 +96,7 @@ const Units: React.FC = () => {
     }
 
     try {
-      const response = await axios.put(`http://localhost:5000/api/units/${editingUnit._id}`, newUnit);
+  const response = await api.put(`/units/${editingUnit._id}`, newUnit);
       setUnits(units.map((unit) => (unit._id === editingUnit._id ? response.data : unit)));
       setEditingUnit(null);
       setNewUnit({ model: '', type: '', brand: '', color: '', plates: '', client: '' });
@@ -104,14 +106,27 @@ const Units: React.FC = () => {
     }
   };
 
-  const filteredUnits = units.filter((unit) =>
-    unit.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    unit.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    unit.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    unit.color.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    unit.plates.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    clients.find(client => client._id === unit.client)?.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUnits = units.filter((unit) => {
+    const q = searchQuery.toLowerCase();
+    const model = (unit.model || '').toLowerCase();
+    const type = (unit.type || '').toLowerCase();
+    const brand = (unit.brand || '').toLowerCase();
+    const color = (unit.color || '').toLowerCase();
+    const plates = (unit.plates || '').toLowerCase();
+    // Obtener nombre de cliente para el filtro, protegiendo null y objetos
+    const clientNameForFilter = unit.client && typeof unit.client === 'object'
+      ? (unit.client?.name || '')
+      : (clients.find(client => client._id === unit.client)?.name || '');
+
+    return (
+      model.includes(q) ||
+      type.includes(q) ||
+      brand.includes(q) ||
+      color.includes(q) ||
+      plates.includes(q) ||
+      clientNameForFilter.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="p-6 space-y-4">
@@ -132,8 +147,8 @@ const Units: React.FC = () => {
         >
           <option value="">Seleccionar Tipo</option>
           {types.map((type: any) => (
-            <option key={type._id} value={type.name}>
-              {type.name}
+            <option key={type?._id ?? type} value={type?.name ?? type}>
+              {type?.name ?? type}
             </option>
           ))}
         </select>
@@ -187,7 +202,9 @@ const Units: React.FC = () => {
       </div>
       <ul className="mt-4 space-y-4">
         {filteredUnits.map((unit) => {
-          const clientName = typeof unit.client === 'object' ? unit.client.name : clients.find(client => client._id === unit.client)?.name || 'Cliente no encontrado';
+          const clientName = unit.client && typeof unit.client === 'object' && unit.client !== null
+            ? (unit.client.name || 'Cliente no encontrado')
+            : (clients.find(client => client._id === unit.client)?.name || 'Cliente no encontrado');
           return (
             <li key={unit._id} className="bg-white p-4 rounded-lg shadow flex justify-between items-center">
               <div>

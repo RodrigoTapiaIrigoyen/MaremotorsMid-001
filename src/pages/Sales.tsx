@@ -569,11 +569,11 @@ const Sales: React.FC = () => {
           <div className="space-y-4">
             {sales
               .filter((sale) => sale.status !== 'archivada') // Excluir ventas archivadas
-              .filter((sale) => sale.client.name.toLowerCase().includes(salesSearchTerm.toLowerCase()))
+              .filter((sale) => sale.client && sale.client.name && sale.client.name.toLowerCase().includes(salesSearchTerm.toLowerCase()))
               .map((sale) => (
                 <div key={sale._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-800">{sale.client.name}</h3>
+                    <h3 className="font-semibold text-gray-800">{sale.client?.name || 'Cliente desconocido'}</h3>
                     <span
                       className={`px-3 py-1 rounded-full text-sm ${
                         sale.status === 'aprobada'

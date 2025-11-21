@@ -41,6 +41,28 @@ export const createQuote = async (req, res) => {
 
     const total = totalWithoutDiscount - discount;
 
+    // Si el status es 'approved', validar y descontar stock de productos
+    if (status === 'approved') {
+      for (const item of items) {
+        if (item.type === 'product' && item.productId) {
+          const product = await Product.findById(item.productId);
+          if (!product) {
+            return res.status(400).json({ message: `Producto con ID ${item.productId} no encontrado` });
+          }
+          // Validar que hay stock suficiente
+          if (product.stock < item.quantity) {
+            return res.status(400).json({ 
+              message: `Stock insuficiente para el producto "${product.name}". Disponible: ${product.stock}, Solicitado: ${item.quantity}` 
+            });
+          }
+          // Descontar el stock
+          product.stock -= item.quantity;
+          await product.save();
+          console.log(`Stock actualizado para producto ${product.name}: ${product.stock + item.quantity} -> ${product.stock}`);
+        }
+      }
+    }
+
     const newQuote = new Quote({ reception, date, client, user, mechanic, documentType, status, discount, items, total });
     await newQuote.save();
     res.status(201).json(newQuote);
@@ -83,6 +105,32 @@ export const updateQuote = async (req, res) => {
     }
 
     const total = totalWithoutDiscount - discount;
+
+    // Si el status cambió a 'approved' y antes no lo estaba, descontar inventario
+    const wasApproved = existingQuote.status === 'approved';
+    const isNowApproved = status === 'approved';
+
+    if (isNowApproved && !wasApproved) {
+      // La cotización acaba de ser aprobada, descontar stock
+      for (const item of items) {
+        if (item.type === 'product' && item.productId) {
+          const product = await Product.findById(item.productId);
+          if (!product) {
+            return res.status(400).json({ message: `Producto con ID ${item.productId} no encontrado` });
+          }
+          // Validar que hay stock suficiente
+          if (product.stock < item.quantity) {
+            return res.status(400).json({ 
+              message: `Stock insuficiente para el producto "${product.name}". Disponible: ${product.stock}, Solicitado: ${item.quantity}` 
+            });
+          }
+          // Descontar el stock
+          product.stock -= item.quantity;
+          await product.save();
+          console.log(`Stock actualizado para producto ${product.name}: ${product.stock + item.quantity} -> ${product.stock}`);
+        }
+      }
+    }
 
     // Actualizar la cotización
     const updatedQuote = await Quote.findByIdAndUpdate(id, 

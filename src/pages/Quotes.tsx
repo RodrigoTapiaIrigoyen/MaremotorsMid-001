@@ -388,7 +388,7 @@ const Quotes: React.FC = () => {
                 onClick={() => handleGeneratePDF(quote)}
                 className="text-green-500 hover:text-green-700 font-semibold"
               >
-                Print PDF
+                Print Mecanic PDF
               </button>
             </div>
           </div>

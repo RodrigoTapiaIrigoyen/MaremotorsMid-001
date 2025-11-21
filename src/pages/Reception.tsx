@@ -222,18 +222,32 @@ const handlePrintPDF = () => {
   const selectedUnit = units.find(unit => unit._id === formData.model);
   const modelName = selectedUnit ? selectedUnit.model || selectedUnit.name : 'Desconocido';
 
+  // Resolver nombre del cliente: formData.client puede ser ID (string) o objeto { _id, name }
+  const clientName = formData.client && typeof formData.client === 'object'
+    ? (formData.client.name || formData.client._id || '')
+    : (clients.find(c => c._id === formData.client)?.name || formData.client || '');
+
+  // Mapear fuelTank a etiqueta legible
+  const fuelOptions = [
+    { _id: '1/4', name: '1/4 de tanque' },
+    { _id: '1/2', name: '1/2 de tanque' },
+    { _id: '3/4', name: '3/4 de tanque' },
+    { _id: 'full', name: 'Tanque Lleno' },
+  ];
+  const fuelTankLabel = fuelOptions.find(o => o._id === formData.fuelTank)?.name || formData.fuelTank || '';
+
   // Main information
   const mainInfo = [
     ["Recepción", formData.reception],
     ["Fecha", formData.date],
-    ["Cliente", formData.client],
+    ["Cliente", clientName],
     ["Teléfono", formData.phone],
     ["Modelo", modelName],
     ["Tipo", formData.type],
     ["Marca", formData.brand],
     ["Color", formData.color],
     ["Placas", formData.plates],
-    ["Tanque de Gasolina", formData.fuelTank],
+  ["Tanque de Gasolina", fuelTankLabel],
     ["Kilómetros", formData.kilometers]
   ];
 
@@ -359,7 +373,9 @@ const handlePrintPDF = () => {
   doc.text("FIRMA DE CONFORMIDAD DE RECEPCION", 55, finalY + 25, { align: "center" });
   doc.text("FIRMA DE CONFORMIDAD DE ENTREGA", 145, finalY + 25, { align: "center" });
 
-  doc.save(`recepcion_${formData.client}.pdf`);
+  // Usar clientName en el filename, limpiar espacios
+  const safeClient = (clientName || 'cliente').toString().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '');
+  doc.save(`recepcion_${safeClient}.pdf`);
 };
 
   const handleSearch = (e) => {

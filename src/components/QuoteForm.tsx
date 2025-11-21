@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import axios from 'axios';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Plus, Trash2, FileText, Download, ClipboardCheck, ChevronRight, Package2, Wrench, DollarSign } from 'lucide-react';
@@ -50,13 +51,23 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
     if (initialQuote && resources.products.length > 0 && resources.services.length > 0) {
       const mappedItems = initialQuote.items.map(item => {
         // Determine if it's a product or service based on the presence of productId or serviceId
-        const type = item.productId ? 'product' : 'service';
-        const id = type === 'product' ? item.productId._id : item.serviceId._id;
-        
+        const isProduct = !!item.productId;
+        const type = isProduct ? 'product' : 'service';
+
+        // item.productId/serviceId can be either an Object with _id or a plain id string
+        let id = '';
+        if (isProduct) {
+          if (typeof item.productId === 'string') id = item.productId;
+          else if (item.productId && item.productId._id) id = item.productId._id;
+        } else {
+          if (typeof item.serviceId === 'string') id = item.serviceId;
+          else if (item.serviceId && item.serviceId._id) id = item.serviceId._id;
+        }
+
         return {
           type,
-          productId: type === 'product' ? id : '',
-          serviceId: type === 'service' ? id : '',
+          productId: isProduct ? id : '',
+          serviceId: !isProduct ? id : '',
           quantity: item.quantity,
           discount: item.discount || 0,
           currency: item.currency || 'USD'
@@ -151,8 +162,27 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
         productId: item.type === 'service' ? undefined : item.productId,
       }));
 
+      // Validaciones básicas: cada ítem debe tener el id correspondiente y cantidad >= 1
+      for (const [i, it] of validItems.entries()) {
+        if (it.type === 'product' && !it.productId) {
+          alert(`El artículo ${i + 1} es un producto pero no tiene productId.`);
+          return;
+        }
+        if (it.type === 'service' && !it.serviceId) {
+          alert(`El artículo ${i + 1} es un servicio pero no tiene serviceId.`);
+          return;
+        }
+        if (!it.quantity || it.quantity <= 0) {
+          alert(`La cantidad del artículo ${i + 1} debe ser mayor a 0.`);
+          return;
+        }
+      }
+
       const total = calculateTotal(validItems, discount);
       const quoteData = { ...formData, items: validItems, total };
+
+      // Loguear payload para depuración si algo falla en el servidor
+      console.debug('Preparing to send quote:', quoteData);
 
       let response;
       if (initialQuote?._id) {
@@ -162,23 +192,19 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
         response = await api.post('/quotes', quoteData);
       }
 
+      // El backend ahora maneja el descuento de inventario cuando status === 'approved'
+      // Solo registramos la venta en el cliente si es necesario
       if (status === 'approved') {
-        for (const item of validItems) {
-          if (item.type === 'product' && item.productId) {
-            const product = resources.products.find(p => p._id === item.productId);
-            if (product) {
-              const newStock = product.stock - item.quantity;
-              await api.put(`/products/${item.productId}`, { stock: newStock });
-            }
-          }
-        }
-
         const sale = {
           date: formData.date,
           total,
           items: validItems,
         };
-        await api.post(`/clients/${formData.client}/sales`, sale);
+        try {
+          await api.post(`/clients/${formData.client}/sales`, sale);
+        } catch (err) {
+          console.error('Failed to record sale for client:', formData.client, err);
+        }
       }
 
       setSuccessMessage('Quote created successfully!');
@@ -187,7 +213,14 @@ const QuoteForm = ({ onSubmit, initialQuote }) => {
       window.location.reload();
     } catch (error) {
       console.error('Error saving quote:', error);
-      setErrorMessage('Error saving quote. Please try again.');
+      // Si es un error de axios, mostrar detalles útiles
+      if (axios.isAxiosError(error)) {
+        console.error('Axios response:', error.response?.status, error.response?.data);
+        const serverMessage = error.response?.data?.message || error.response?.data || error.message;
+        setErrorMessage(typeof serverMessage === 'string' ? serverMessage : 'Error saving quote (server error)');
+      } else {
+        setErrorMessage('Error saving quote. Please try again.');
+      }
       setSuccessMessage(null);
     }
   };
